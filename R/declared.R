@@ -72,14 +72,52 @@
     # this is necessary to replace those values
     # (because of the "[<-.declared" method)
     attributes(x) <- NULL # or x <- unclass(x), but I find this cleaner
-    if (!is.null(na_index)) {
-        # x <- ifelse(!is.na(missingValues), missingValues, x)
-        x[na_index] <- likely_mode(names(na_index))
-    }
-    
-    attrx$na_index <- NULL
 
-    attrx$class <- c("haven_labelled_spss", "haven_labelled", "vctrs_vctr", setdiff(attrx$class, "declared"))
+    if (admisc::possibleNumeric(x) || all(is.na(x))) {
+        x <- as.numeric(x)
+    }
+
+    if (!is.null(na_index)) {
+        # x[na_index] <- likely_mode(names(na_index))
+        
+        #------------------------------------------
+        # detour until ReadStat deals with integers
+        na_values <- names(na_index)
+        if (is.numeric(x)) {
+            na_values <- as.numeric(na_values)
+        }
+        x[na_index] <- na_values
+        #------------------------------------------
+    }
+
+    #------------------------------------------
+    # detour until ReadStat deals with integers
+    na_values <- attrx$na_values
+    if (!is.null(na_values)) {
+        if (is.numeric(x)) {
+            na_values <- as.numeric(na_values)
+            names(na_values) <- names(attrx$na_values)
+            attrx$na_values <- na_values
+        }
+    }
+
+    labels <- attrx$labels
+    if (!is.null(labels)) {
+        if (is.numeric(x)) {
+            labels <- as.numeric(labels)
+            names(labels) <- names(attrx$labels)
+            attrx$labels <- labels
+        }
+    }
+    #------------------------------------------
+
+    attrx$na_index <- NULL
+    # attrx$class <- c("haven_labelled_spss", "haven_labelled", "vctrs_vctr", setdiff(attrx$class, "declared"))
+    
+    #------------------------------------------
+    # detour until ReadStat deals with integers
+    attrx$class <- unique(c("haven_labelled_spss", "haven_labelled", "vctrs_vctr", setdiff(attrx$class, c("declared", "double", "integer")), class(x)))
+    #------------------------------------------
 
     attributes(x) <- attrx
     return(x)
@@ -143,6 +181,7 @@
     return(x)
 }
 
+
 `as_declared.factor` <- function(x, ...) {
     # TO DO, but for the moment, do nothing
     return(x)
@@ -195,7 +234,7 @@
     return(x)
 }
 
-# no export
+
 `validate_declared` <- function(x = double(), labels = NULL, label = NULL,
                                 na_values = NULL, na_range = NULL, ...) {
     
@@ -242,7 +281,6 @@
 }
 
 
-
 `declared` <- function(x = double(), labels = NULL, na_values = NULL,
                           na_range = NULL, label = NULL, ...) {
     if (inherits(x, "haven_labelled")) {
@@ -268,16 +306,18 @@
     return(x)
 }
 
+
 `likely_mode` <- function(x) {
     if (admisc::possibleNumeric(x) || all(is.na(x))) {
         x <- admisc::asNumeric(x)
-        if (admisc::wholeNumeric(x)) {
+        if (admisc::wholeNumeric(x) & !is.integer(x)) {
             x <- as.integer(x)
         }
     }
 
     return(x)
 }
+
 
 `likely_type` <- function(x) {
     type <- NULL
@@ -394,7 +434,6 @@
     print(data.frame(value = unname(labels), label = names(labels), row.names = NULL), row.names = FALSE)
     return(invisible(x))
 }
-
 
 
 `==.declared` <- function(e1, e2) {
