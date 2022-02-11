@@ -1,3 +1,10 @@
+Version 0.9
+    o New argument "weight" in function frtable(), allowing to weight not only
+      valid but also missing values as well
+    o More robust function frtable() in treating declared values with
+      overlapping labels (e.g. hierarchical ISCO codes and categories)
+    o Fixed a bug in declared() when all values are completely missing
+
 Version 0.8
     o Improved treatment of equality and non-equality, now accepting labels as
       well as values

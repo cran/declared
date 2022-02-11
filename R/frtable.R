@@ -1,4 +1,4 @@
-`frtable` <- function(x, values = TRUE, valid = TRUE) {
+`frtable` <- function(x, values = TRUE, valid = TRUE, weight = NULL) {
     
     if (inherits(x, "haven_labelled")) {
         x <- as_declared(x)
@@ -15,17 +15,31 @@
     if (inherits(x, "declared")) {
         vallab <- names_values(x) # arranges missing values at the end
         na_values <- attr(vallab, "missing")
-        x <- factor(to_labels(x), levels = names(vallab))
+        # x <- factor(to_labels(x), levels = names(vallab))
+        # sometimes (e.g. ISCO codifications in ESS) there are identical labels
+        # with different values, and factor() complains with overlapping levels
+        x <- factor(
+            paste(to_labels(x), undeclare(x), sep = "_-_"),
+            levels = paste(names(vallab), vallab, sep = "_-_")
+        )
     }
     else {
         values <- FALSE
         lvls <- levels(as.factor(x))
         vallab <- seq(length(lvls))
-        names(vallab) <- levels(as.factor(x))
+        names(vallab) <- lvls
     }
 
-    tbl <- table(x)
+    if (is.null(weight)) {
+        weight <- rep(1, length(x))
+    }
+    
+    tbl <- round(tapply(weight, x, sum, simplify = TRUE), 0)
+    tbl[is.na(tbl)] <- 0
+    # tbl <- table(x)
+    
     labels <- names(tbl)
+    labels <- unlist(lapply(strsplit(labels, split = "_-_"), "[[", 1))
     if (any(is.na(x))) {
         tbl <- c(tbl, sum(is.na(x)))
         labels <- c(labels, NA)
@@ -40,7 +54,8 @@
         vld <- res$fre
         vld[which(is.element(vallab, na_values))] <- NA
         vld[is.na(labels)] <- NA
-        vld <- 100 * prop.table(na.omit(vld))
+        vld[!is.na(vld) & res$fre == 0] <- 0
+        vld[!is.na(vld) & res$fre != 0] <- 100 * prop.table(na.omit(vld[!is.na(vld) & res$fre != 0]))
         res$vld <- NA
         res$vld[seq(length(vld))] <- vld
         res$cpd <- NA
@@ -90,6 +105,7 @@
     rnms <- labels
     
     if (show_values) {
+        values <- formatC(as.character(values), digits = max(nchar(values)) - 1, flag = " ")
         labels[!is.na(labels)][values == labels[!is.na(labels)]] <- ""
         rnms[!is.na(labels)] <- paste(labels[!is.na(labels)], values, sep = " ")
     }
