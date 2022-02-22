@@ -19,13 +19,19 @@ export(
     to_labels,
     undeclare,
     value_labels,
+    w_mean,
+    w_median,
+    w_sd,
+    w_table,
+    w_var,
+    w_quantile,
     "value_labels<-",
     variable_label,
     "variable_label<-"
 )
 
 
-S3method(print, frtable)
+S3method(print, w_table)
 
 S3method(format, pillar_shaft_declared_chr)
 S3method(format, pillar_shaft_declared_num)
