@@ -2,17 +2,21 @@
 \alias{w_table}
 \alias{w_mean}
 \alias{w_median}
+\alias{w_mode}
 \alias{w_var}
 \alias{w_sd}
 \alias{w_summary}
 \alias{w_quantile}
+\alias{w_standardize}
 \alias{frtable}
+
 
 \title{Compute weighted summaries for declared objects}
 
 \description{
 Functions to compute weighted tables or summaries, based on a vector of frequency
-weights, adapted to objects of class \code{"declared"}.
+weights. These are reimplementations of variously existing functions, but adapted
+to objects of class \code{"declared"} (see Details below)
 }
 
 \usage{
@@ -21,7 +25,9 @@ w_table(x, y = NULL, wt = NULL, values = FALSE, valid = TRUE,
 
 w_mean(x, wt = NULL, trim = 0, na.rm = TRUE)
 
-w_median(x, wt, na.rm = TRUE, ...)
+w_median(x, wt = NULL, na.rm = TRUE, ...)
+
+w_mode(x, wt = NULL)
 
 w_var(x, wt = NULL, method = NULL, na.rm = TRUE)
 
@@ -30,6 +36,8 @@ w_sd(x, wt = NULL, method = NULL, na.rm = TRUE)
 w_summary(x, wt = NULL, ...)
 
 w_quantile(x, wt = NULL, probs = seq(0, 1, 0.25), na.rm = TRUE, ...)
+
+w_standardize(x, wt = NULL, na.rm = TRUE)
 }
 
 
@@ -56,7 +64,7 @@ w_quantile(x, wt = NULL, probs = seq(0, 1, 0.25), na.rm = TRUE, ...)
 }
 
 \value{
-A weighted variance or standard deviation.
+A vector of (weighted) values.
 }
 
 \details{
@@ -64,14 +72,20 @@ A frequency table is usually performed for a categorical variable, displaying th
 frequencies of the respective categories. Note that general variables containing
 text are not necessarily factors, despite having a small number of characters.
 
-It is sometimes possible to perform a frequency table for numerical variables,
-if the number of values is very limited (an arbitrary and debatable upper limit
-of 15 is used). An example of such variable can be the number of children, where
-each value can be interpreted as a class, containing a single value (for
-instance 0 meaning the category of people with no children).
+A general table of frequencies, using the base function \code{table()}, ignores
+the defined missing values (which are all stored as NAs). The reimplementation
+of this function in \code{w_table()} takes care of this detail, and presents
+frequencies for each separately defined missing values. Similar reimplementations
+for the other functions have the same underlying objective.
+
+It is also possible to perform a frequency table for numerical variables, if the
+number of values is limited (an arbitrary and debatable upper limit of 15 is
+used). An example of such variable can be the number of children, where each
+value can be interpreted as a class, containing a single value (for instance 0
+meaning the category of people with no children).
 
 Objects of class \code{declared} are not pure categorical variables (R factors)
-but they are nevertheless interpreted as similar to factors, to allow producing
+but they are nevertheless interpreted similarly to factors, to allow producing
 frequency tables. Given the high similarity with package \bold{\code{haven}},
 objects of class \code{haven_labelled_spss} are automatically coerced to objects
 of class \code{declared} and treated accordingly.
@@ -115,6 +129,11 @@ For all functions, the argument \code{na.rm} refers to the undeclared missing
 values and its default is set to TRUE. The declared missing values are
 automatically eliminated from the summary statistics, even if this argument is
 deactivated.
+
+The function \code{w_mode()} returns the weighted mode of a variable. Unlike the
+other functions where the prefix \code{w_} signals a weighted version of the
+base function with the same name, this has nothing to do with the base function
+\code{mode()} which refers to the storage mode / type of an R object.
 }
 
 \author{Adrian Dusa}
@@ -153,9 +172,8 @@ x <- declared(
 
 w_table(x)
 
-
-# Categories only (without values)
-w_table(x, values = FALSE)
+# Including the values in the table of frequencies
+w_table(x, values = TRUE)
 
 
 # An example involving multiple variables
