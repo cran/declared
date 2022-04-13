@@ -1,19 +1,22 @@
 \name{declared}
 \alias{declared}
-\alias{is_declared}
 \alias{is.declared}
-\alias{as_declared}
 \alias{as.declared}
+\alias{as_declared}
+\alias{as.haven}
 \alias{as_haven}
 \alias{undeclare}
 
 \title{Labelled vectors with declared missing values}
-\description{The labelled vectors are mainly used to analyse social science data,
-and the missing values declaration is an important step in the analysis.}
+
+\description{
+The labelled vectors are mainly used to analyse social science data,
+and the missing values declaration is an important step in the analysis.
+}
 
 \usage{
 declared(
-    x = double(),
+    x,
     labels = NULL,
     na_values = NULL,
     na_range = NULL,
@@ -21,15 +24,11 @@ declared(
     ...
 )
 
-is_declared(x)
-
 is.declared(x)
-
-as_declared(x, ...)
 
 as.declared(x, ...)
 
-as_haven(x, ...)
+as.haven(x, ...)
 
 undeclare(x, drop = FALSE, ...)
 }
@@ -61,7 +60,8 @@ objects from package \bold{haven}. It has exactly the same arguments, but it
 features a fundamental difference in the treatment of (declared) missing values.
 
 In package \bold{haven}, existing values are treated as if they were missing. By
-contrast, in package \bold{declared} the NA values are treated as existing values.
+contrast, in package \bold{declared} the NA values are treated as if they were
+existing values.
 
 This difference is fundamental and points to an inconsistency in package
 \bold{haven}: while existing values can be identified as missing using the
@@ -83,6 +83,12 @@ This is a trade off and has important implications when subsetting datasets: all
 declared variables get this attribute refreshed, which consumes some time
 depending on the number of variables in the data.
 
+The generic function \code{as.declared()} attempts to coerce only the compatible
+types of objects, namely \code{haven_labelled} and \code{factor}s. Dedicated
+class methods can be written for any other type of object, and users are free to
+write their own. To end of with a declared object, additional metadata is needed
+such as value labels, which values should be treated as missing etc.
+
 The function \code{undeclare()} replaces the NA entries into their original
 numeric values, and drops all attributes related to missing values:
 \code{na_values}, \code{na_range} and \code{na_index}. The result can be a
@@ -91,15 +97,15 @@ by activating the argument \code{drop}.
 }
 
 \value{
-\code{declared()}, \code{as_declared()} and \code{is_declared()} will return a
+\code{declared()}, \code{as.declared()} and \code{is.declared()} will return a
 labelled vector.
 
-\code{is_declared()} and \code{is.declared()} will return a logical scalar.
+\code{is.declared()} and \code{is.declared()} will return a logical scalar.
 
 \code{undeclare()} will return a an object of class \code{declared} without the
 declared missing values
 
-\code{as_haven()} returns an object of class \code{haven_labelled_spss}
+\code{as.haven()} returns an object of class \code{haven_labelled_spss}
 }
 
 \examples{
@@ -127,25 +133,4 @@ c(x, 2, -1)
 
 # switch NAs with their original values
 undeclare(x)
-
-
-set.seed(123)
-DF <- data.frame(
-    Area = declared(
-        sample(1:2, 123, replace = TRUE),
-        labels = c(Urban = 1, Rural = 2)
-    ),
-    Gender = declared(
-        sample(c(1:2, -1), 123, replace = TRUE),
-        labels = c(Male = 1, Female = 2, Nonresponse = -1),
-        na_values = -1
-    ),
-    Age = sample(18:90, 123, replace = TRUE),
-    Children = sample(0:5, 123, replace = TRUE)
-)
-
-using(DF, mean(Children), split.by = Area)
-
-using(DF, mean(Age), split.by = Gender & Area)
-
 }

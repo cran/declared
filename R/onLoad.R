@@ -10,10 +10,10 @@
     }
  
     suppressPackageStartupMessages(
-        lapply(c("stats", "admisc", "utils"), load_library)
+        lapply(c("stats", "utils"), load_library)
     )
 
-    if (admisc::unlockEnvironment(asNamespace("base"))) {
+    if (unlockEnvironment_(asNamespace("base"))) {
 
         env <- as.environment("package:base")
         do.call("unlockBinding", list(sym = "print.data.frame", env = env))
@@ -78,7 +78,7 @@
             # -----------------------------------------------------
             # this function is also unchanged, except for this part:
             for (i in seq_len(nc)) {
-                if (is_declared(x[[i]]) && any(is.na(x[[i]]))) {
+                if (is.declared(x[[i]]) && any(is.na(x[[i]]))) {
                     # any(is.na()) is necessary to guard against na.omit(), for instance
                     rval[[i]] <- format_declared(x[[i]])
                 }
@@ -125,7 +125,7 @@
         do.call("unlockBinding", list(sym = "order", env = env))
         
         env$order <- function (..., na.last = TRUE, decreasing = FALSE,
-            method = c("auto", "shell", "radix")) {
+            method = c("auto", "shell", "radix"), empty.last = na.last) {
             
             z <- list(...)
             decreasing <- as.logical(decreasing)
@@ -139,7 +139,7 @@
             method <- match.arg(method)
             
             if (any(vapply(z, function(x) {
-                    is.object(x) && !is_declared(x)
+                    is.object(x) && !is.declared(x)
                 }, logical(1L)))) {
                 z <- lapply(z, function(x) if (is.object(x)) 
                     as.vector(xtfrm(x))
@@ -155,8 +155,9 @@
                 method <- ifelse (useRadix, "radix", "shell")
             }
 
-            if (length(z) == 1L && is_declared(x)) {
-                return(order_declared(x, na.last = na.last, decreasing = decreasing, method = method, na_values.last = na.last))
+            
+            if (length(z) == 1L && is.declared(x)) {
+                return(order_declared(x, na.last = na.last, decreasing = decreasing, method = method, empty.last = empty.last))
             }
 
             if (method != "radix" && !is.na(na.last)) {
@@ -194,7 +195,12 @@
 
         do.call("unlockBinding", list(sym = "as.factor", env = env))
 
-        env$as.factor <- function(x, levels = c("default", "labels", "values", "both"), ordered = FALSE, ...) {
+        env$as.factor <- function(
+            x,
+            levels = c("default", "labels", "values", "both"),
+            ordered = FALSE,
+            ...
+        ) {
             if (is.declared(x)) {
                 levels <- match.arg(levels)
                 label <- attr(x, "label", exact = TRUE)
@@ -207,12 +213,12 @@
                     }
 
                     vals <- sort(unique(x), na.last = TRUE)
-                    x <- factor(to_labels(undeclare(x)), levels = to_labels(vals), ordered = ordered)
+                    x <- factor(as.character(undeclare(x)), levels = as.character(vals), ordered = ordered)
                 }
                 else if (levels == "labels") {
                     levs <- unname(labels)
                     labs <- names(labels)
-                    x <- factor(to_labels(undeclare(x)), levels = sort(unique(labs)), ordered = ordered)
+                    x <- factor(as.character(undeclare(x)), levels = sort(unique(labs)), ordered = ordered)
                 }
                 else if (levels == "values") {
                     levels <- unique(undeclare(sort(x, na.last = TRUE)))
@@ -239,14 +245,14 @@
         }
     }
 
-    if (admisc::unlockEnvironment(asNamespace("stats"))) {
+    if (unlockEnvironment_(asNamespace("stats"))) {
 
         env <- as.environment("package:stats")
 
         do.call("unlockBinding", list(sym = "sd", env = env))
         
         env$sd <- function(x, na.rm = FALSE) {
-            if (is_declared(x)) {
+            if (is.declared(x)) {
                 na_index <- attr(x, "na_index")
                 if (!is.null(na_index)) {
                     x <- x[-na_index]
@@ -260,7 +266,7 @@
         do.call("unlockBinding", list(sym = "var", env = env))
         
         env$var <- function(x, y = NULL, na.rm = FALSE, use) {
-            if (is_declared(x)) {
+            if (is.declared(x)) {
                 na_index <- attr(x, "na_index")
                 if (!is.null(na_index)) {
                     x <- x[-na_index]
@@ -300,7 +306,7 @@
         do.call("unlockBinding", list(sym = "fivenum", env = env))
         
         env$fivenum <- function(x, na.rm = FALSE) {
-            if (is_declared(x)) {
+            if (is.declared(x)) {
                 na_index <- attr(x, "na_index")
                 if (!is.null(na_index)) {
                     x <- x[-na_index]
@@ -326,7 +332,7 @@
         }
     }
 
-    if (admisc::unlockEnvironment(asNamespace("utils"))) {
+    if (unlockEnvironment_(asNamespace("utils"))) {
         env <- as.environment("package:utils")
 
         do.call("unlockBinding", list(sym = "write.csv", env = env))

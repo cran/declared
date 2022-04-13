@@ -1,14 +1,37 @@
-`as_haven` <- function(x, ...) {
-    UseMethod("as_haven")
+`as.haven` <- function(x, ...) {
+    UseMethod("as.haven")
 }
 
 
-`as_haven.default` <- function(x, ...) {
+`as_haven` <- function(x, ...) {
+    UseMethod("as.haven")
+}
+
+
+`as.haven.default` <- function(x, ...) {
+    interactive <- TRUE
+
+    dots <- list(...)
+    if (!is.null(dots$interactive)) {
+        interactive <- dots$interactive
+    }
+
+    if (isTRUE(interactive)) {
+        msg <- "There is no automatic class method conversion for this type of"
+        if (!is.null(dots$vname_)) {
+            msg <- paste0(dots$vname_, ": ", msg, " variable.")
+        }
+        else {
+            msg <- paste(msg, "object.")
+        }
+        message(msg)
+    }
+    
     return(x)
 }
 
 
-`as_haven.declared` <- function(x, ...) {
+`as.haven.declared` <- function(x, ...) {
     na_index <- attr(x, "na_index")
     attrx <- attributes(x)
 
@@ -16,12 +39,12 @@
     # (because of the "[<-.declared" method)
     attributes(x) <- NULL # or x <- unclass(x), but I find this cleaner
 
-    if (admisc::possibleNumeric(x) || all(is.na(x))) {
+    if (possibleNumeric_(x) || all(is.na(x))) {
         x <- as.numeric(x)
     }
 
     if (!is.null(na_index)) {
-        # x[na_index] <- admisc::coerceMode(names(na_index))
+        # x[na_index] <- coerceMode_(names(na_index))
 
         #------------------------------------------
         # detour until ReadStat deals with integers
@@ -36,9 +59,9 @@
     #------------------------------------------
     # detour until ReadStat deals with integers
     na_values <- attrx$na_values
-    pN_na_values <- admisc::possibleNumeric(na_values)
+    pN_na_values <- possibleNumeric_(na_values)
     labels <- attrx$labels
-    pN_labels <- admisc::possibleNumeric(labels)
+    pN_labels <- possibleNumeric_(labels)
     all_num <- is.numeric(x)
 
     if (!is.null(na_values)) {
@@ -98,12 +121,28 @@
 }
 
 
-`as_haven.data.frame` <- function(x, ..., only_declared = TRUE) {
+`as.haven.data.frame` <- function(x, ..., only_declared = TRUE, interactive = FALSE) {
     if (only_declared) {
-        xdeclared <- vapply(x, is_declared, logical(1))
-        x[xdeclared] <- lapply(x[xdeclared], as_haven, ...)
+        xdeclared <- vapply(x, is.declared, logical(1))
+        if (isFALSE(interactive)) {
+            x[xdeclared] <- lapply(x[xdeclared], as.haven, interactive = FALSE, ... = ...)
+        }
+        else {
+            nms <- names(x)[xdeclared]
+            for (i in seq(length(nms))) {
+                x[[nms[i]]] <- as.haven(x[[nms[i]]], vname_ = nms[i], ... = ...)
+            }
+        }
     } else {
-        x[] <- lapply(x, as_haven, ...)
+        if (isFALSE(interactive)) {
+            x[] <- lapply(x, as.haven, interactive = FALSE, ... = ...)
+        }
+        else {
+            nms <- names(x)
+            for (i in seq(length(nms))) {
+                x[[i]] <- as.haven(x[[i]], vname_ = nms[i], ... = ...)
+            }
+        }
     }
     
     class(x) <- c("tbl", "tbl_df", "data.frame")
@@ -114,7 +153,7 @@
 `as_factor.declared` <- function(
     x, levels = c("default", "labels", "values", "both"), ordered = FALSE, ...
 ) {
-    as.factor(x, levels = levels, ordered = ordered, ... = ...)
+    as.factor(undeclare(x), levels = levels, ordered = ordered, ... = ...)
 }
 
 `zap_labels.declared` <- function(x) {
