@@ -206,19 +206,26 @@
                 label <- attr(x, "label", exact = TRUE)
                 labels <- attr(x, "labels")
 
-                if (levels %in% c("default", "both")) {
-                    if (levels == "both") {
-                        names(labels) <- paste0("[", labels, "] ", names(labels))
-                        attr(x, "labels") <- labels
-                    }
+                if (levels == "both") {
+                    names(labels) <- paste0("[", labels, "] ", names(labels))
+                    attr(x, "labels") <- labels
 
                     vals <- sort(unique(x), na.last = TRUE)
-                    x <- factor(as.character(undeclare(x)), levels = as.character(vals), ordered = ordered)
+                    
+                    x <- factor(
+                        as.character(undeclare(x)),
+                        levels = as.character(undeclare(vals)),
+                        ordered = ordered
+                    )
                 }
-                else if (levels == "labels") {
+                else if (levels %in% c("default", "labels")) {
                     levs <- unname(labels)
                     labs <- names(labels)
-                    x <- factor(as.character(undeclare(x)), levels = sort(unique(labs)), ordered = ordered)
+                    x <- factor(
+                        as.character(undeclare(x)),
+                        levels = sort(unique(labs)),
+                        ordered = ordered
+                    )
                 }
                 else if (levels == "values") {
                     levels <- unique(undeclare(sort(x, na.last = TRUE)))
@@ -332,40 +339,6 @@
         }
     }
 
-    if (unlockEnvironment_(asNamespace("utils"))) {
-        env <- as.environment("package:utils")
-
-        do.call("unlockBinding", list(sym = "write.csv", env = env))
-
-         env$write.csv <- function(...) {
-            # Call <- as.list(match.call(expand.dots = TRUE))
-            dots <- list(...)
-            
-            for (argname in c("append", "col.names", "sep", "dec", "qmethod")) {
-                if (!is.null(dots[[argname]])) {
-                    warning(gettextf("attempt to set '%s' ignored", argname), domain = NA)
-                }
-            }
-            
-            dots[[1L]] <- undeclare(dots[[1L]])
-
-            dots$append <- NULL
-            rn <- dots$row.names
-            dots$col.names <- if (is.logical(rn) && !rn) {
-                TRUE
-            }
-            else {
-                NA
-            }
-            dots$sep <- ","
-            dots$dec <- "."
-            dots$qmethod <- "double"
-            dots$na <- ""
-
-            do.call("write.table", dots)
-        }
-    }
-
     register_S3_method("labelled", "na_values", "declared")
     register_S3_method("labelled", "na_values<-", "declared")
     register_S3_method("labelled", "na_range", "declared")
@@ -395,6 +368,7 @@
     register_S3_method("vctrs", "vec_ptype_full", "declared")
     register_S3_method("vctrs", "vec_ptype2", "declared")
 
+    register_S3_method("vroom", "output_column", "declared")
     invisible()
 }
 

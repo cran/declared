@@ -1,6 +1,6 @@
 Package: declared
-Version: 0.15
-Date: 2022-04-13
+Version: 0.16
+Date: 2022-05-12
 Title: Functions to Declare Missing Values
 Authors@R: person(given = "Adrian", family = "Dusa",
                   role = c("aut", "cre", "cph"),
@@ -21,8 +21,8 @@ Description: A set of functions to declare labels and missing values, coupled wi
     much compatibility as possible with these packages, with the intention to
     offer a complementary alternative for the objects of class "declared".
 NeedsCompilation: yes
-Packaged: 2022-04-13 13:00:06 UTC; dusadrian
+Packaged: 2022-05-12 15:29:08 UTC; dusadrian
 Author: Adrian Dusa [aut, cre, cph] (<https://orcid.org/0000-0002-3525-9253>)
 Maintainer: Adrian Dusa <dusa.adrian@unibuc.ro>
 Repository: CRAN
-Date/Publication: 2022-04-13 13:22:29 UTC
+Date/Publication: 2022-05-12 22:10:02 UTC
