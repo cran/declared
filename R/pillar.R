@@ -1,65 +1,71 @@
-# Dynamically exported, see onLoad.R
-# using eval(parse()) to avoid the huge dependency tree of vctrs, haven, labelled and pillar
+# Copyright (c) 2022, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote products
+#       derived from this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 `pillar_shaft.declared` <- function(
     x,
     show_labels = getOption("declared.show_pillar_labels", TRUE),
     ...) {
-
     if (eval(parse(text = "requireNamespace('haven', quietly = TRUE)"))) {
         return(eval(parse(text = "pillar::pillar_shaft(as.haven(x))")))
     }
-
     if (!isTRUE(show_labels) | !pillar_print_pkgs_available()) {
         return(eval(parse(text = "pillar::pillar_shaft(unclass(x))")))
     }
-
     if (is.numeric(x)) {
         val <- val_num_pillar_info(x)
         lbl <- lbl_pillar_info(x)
-
         mw <- max(val$disp_short$lhs_ws + val$disp_short$main_wid + lbl$wid_short)
         w <- max(val$disp_full$lhs_ws + val$disp_full$main_wid + lbl$wid_full)
-
         eval(parse(text = "pillar::new_pillar_shaft(list(val = val, lbl = lbl), min_width = mw, width = w, class = 'pillar_shaft_declared_num')"))
     }
     else {
         val <- val_chr_pillar_info(x)
         lbl <- lbl_pillar_info(x)
-
         mw <- max(val$wid_short + lbl$wid_short)
         w <- max(val$wid_full + lbl$wid_full)
-
         eval(parse(text = "pillar::new_pillar_shaft(list(val = val, lbl = lbl), min_width = mw, width = w, class = 'pillar_shaft_declared_chr')"))
     }
 }
-
 `val_num_pillar_info` <- function(x) {
     val_pillar <- eval(parse(text = "pillar::pillar_shaft(haven::zap_labels(undeclare(x)))"))
-
     disp_short <- num_disp_components(x, val_pillar, attr(val_pillar, "min_width"))
     disp_full <- num_disp_components(x, val_pillar, attr(val_pillar, "width"))
-
     list(
         disp_short = disp_short,
         disp_full = disp_full
     )
 }
-
 `num_disp_components` <- function(x, pillar, width) {
     display <- format(pillar, width)
-    # Sometimes there's an extra leading space from pillar
     display <- trim_ws_lhs(display)
-    # exponent notation formatting hinders stripping white space in NAs
     display[is.na(unclass(x))] <- eval(parse(text = "crayon::strip_style(display[is.na(unclass(x))])"))
-
     display_untrimmed_wid <- eval(parse(text = "pillar::get_extent(display)"))
     display_max_wid <- max(display_untrimmed_wid)
     display <- trim_ws_rhs(display)
     main_wid <- eval(parse(text = "pillar::get_extent(display)"))
     display_trimmed_rhs <- display_untrimmed_wid - main_wid
-
-    # display[is.na(unclass(x))] <- eval(parse(text = "pillar::style_na(display[is.na(unclass(x))])"))
     list(
         lhs_ws = max(main_wid + display_trimmed_rhs) - (main_wid + display_trimmed_rhs),
         main_wid = main_wid,
@@ -67,13 +73,11 @@
         rhs_ws = display_trimmed_rhs
     )
 }
-
 `val_chr_pillar_info` <- function(x) {
     MIN_CHR_DISPLAY <- 4
     val_pillar <- eval(parse(text = "pillar::pillar_shaft(haven::zap_labels(x))"))
     disp_full <- trim_ws_rhs(format(val_pillar, attr(val_pillar, "width")))
     wid_full <- eval(parse(text = "pillar::get_extent(disp_full)"))
-
     list(
         val_pillar = val_pillar,
         wid_short = pmin(MIN_CHR_DISPLAY, wid_full),
@@ -81,7 +85,6 @@
         wid_full = wid_full
     )
 }
-
 `lbl_pillar_info` <- function(x) {
     MIN_LBL_DISPLAY <- 6
     labels <- attr(x, "labels")
@@ -95,19 +98,16 @@
     }
     label_widths <- eval(parse(text = "pillar::get_extent(label_display)"))
     label_min_widths <- ifelse(label_widths > 0, pmin(MIN_LBL_DISPLAY, label_widths), 0)
-
     if (inherits(x, "declared")) {
         MIN_NA_DISPLAY <- 4
         na_display <- character(length(x))
         na_index <- attr(x, "na_index")
         eval(parse(text = "na_display[na_index] <- pillar::style_na(' (NA)')"))
         na_widths <- eval(parse(text = "pillar::get_extent(na_display)"))
-
         label_display <- paste0(na_display, label_display)
         label_widths <- label_widths + na_widths
         label_min_widths <- label_min_widths + ifelse(label_widths > 0, pmin(MIN_NA_DISPLAY, label_widths), 0)
     }
-
     ret <- list(
         wid_short = label_min_widths,
         disp_full = label_display,
@@ -115,13 +115,10 @@
     )
     ret
 }
-
-# to export
 `format.pillar_shaft_declared_num` <- function(x, width, ...) {
     vshort <- x$val$disp_short
     vfull <- x$val$disp_full
     lbl_wid <- pmax(0, x$lbl$wid_short - vfull$rhs_ws)
-
     if (width >= max(vfull$lhs_ws +vfull$main_wid + lbl_wid)) {
         lbl_width <- width - (vfull$lhs_ws + vfull$main_wid)
         lbl <- str_trunc(x$lbl$disp_full, lbl_width, subtle = TRUE)
@@ -133,8 +130,6 @@
     }
     eval(parse(text = "pillar::new_ornament(out, width = width, align = 'right')"))
 }
-
-# to export
 `format.pillar_shaft_declared_chr` <- function(x, width, ...) {
     if (width >= max(x$val$wid_full + x$lbl$wid_short)) {
         lbl_width <- width - x$val$wid_full
@@ -148,47 +143,34 @@
     }
     eval(parse(text = "pillar::new_ornament(out, width = width, align = 'left')"))
 }
-
-
-# Helpers -----------------------------------------------------------------
-
 `str_trunc` <- function(x, widths, subtle = FALSE) {
     str_width <- eval(parse(text = "pillar::get_extent(x)"))
     too_wide <- which(!is.na(x) & str_width > widths)
-
     continue_symbol <- eval(parse(text = "cli::symbol$continue"))
     if (subtle) continue_symbol <- eval(parse(text = "pillar::style_subtle(continue_symbol)"))
-
     truncated <- Map(x[too_wide], widths[too_wide], f = function(item, wid) {
         aa <- eval(parse(text = "crayon::col_substr(item, 1, wid - 1)"))
         paste0(aa, continue_symbol)
     })
     truncated <- as.vector(truncated, "character")
     x[too_wide] <- truncated
-
     x
 }
-
 `trim_ws_rhs` <- function(x) {
     sub("[ \t\r\n]+$", "", x)
 }
-
 `trim_ws_lhs` <- function(x) {
     sub("^[ \t\r\n]+", "", x)
 }
-
 `pad_space` <- function(n) {
     vapply(n, function(x) paste(rep(" ", x), collapse = ""), "")
 }
-
 `paste_with_align` <- function(x, y, lhs_ws, rhs_ws) {
     y_wid <- eval(parse(text = "pillar::get_extent(y)"))
     added_chars <- max(y_wid - rhs_ws)
     rhs_ws <- added_chars - (y_wid - rhs_ws)
-
     paste0(pad_space(lhs_ws), x, y, pad_space(rhs_ws))
 }
-
 `pillar_print_pkgs_available` <- function() {
     eval(parse(text = "requireNamespace('crayon', quietly = TRUE)")) &
     eval(parse(text = "requireNamespace('cli', quietly = TRUE)"))
