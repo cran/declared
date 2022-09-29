@@ -23,6 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @rdname weighted
+#' @param probs Numeric vector of probabilities with values in \[0,1\]
+#' @export
 `w_quantile` <- function(
     x, wt = NULL, probs = seq(0, 1, 0.25), na.rm = TRUE, ...
 ) {
@@ -39,10 +42,11 @@
             x <- x[-na_index]
             wt <- wt[-na_index] 
         }
+        attributes(x) <- NULL
     }
     if (is.null(wt)) {
         qs <- quantile(x, probs = probs, na.rm = na.rm, ... = ...)
-        class(qs) <- c("w_quantile", class(qs))
+        class(qs) <- c("fobject", class(qs))
         return(qs)
     }
     if (!(is.atomic(wt) && all(is.finite(na.omit(wt))))) {

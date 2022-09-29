@@ -1,8 +1,18 @@
+Version 0.18
+    o Improved method for rbind() data frames, taking care of declared variables
+    o Function value_labels() has been replaced with the generic base function
+      labels(), and the function variable_label() has been replaced with the
+      function label()
+    o Changed default for as.factor(), with values and (where available) levels
+      (thanks to Daniel Antal for the report)
+    o New generic function drop_na() to drop information about the declared
+      missing values
+
 Version 0.17
-    o correctly determine the object mode, function of both value labels and
+    o Correctly determine the object mode, function of both value labels and
       input values (especially when all input values are empty NA values)
-    o new argument "measurement" in function declared()
-    o new function measurement(), to query and allocate measurement levels
+    o New argument "measurement" in function declared()
+    o New function measurement(), to query and allocate measurement levels
 
 Version 0.16
     o New logical argument "values" in the S3 method for as.character()

@@ -24,29 +24,29 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 `.onLoad` <- function(...) {
-    load_library <- function(pkg) {
-        if (pkg %in% loadedNamespaces() && !is.element(pkg, .packages())) {
-            loc <- dirname(getNamespaceInfo(pkg, "path"))
-            do.call(
-                "library",
-                list(pkg, lib.loc = loc, character.only = TRUE, warn.conflicts = FALSE)
-            )
-        }
-    }
+    loc <- dirname(getNamespaceInfo("stats", "path"))
     suppressPackageStartupMessages(
-        lapply(c("stats", "utils"), load_library)
+        do.call(
+            "library",
+            list(
+                "stats",
+                lib.loc = loc,
+                character.only = TRUE,
+                warn.conflicts = FALSE
+            )
+        )
     )
     if (unlockEnvironment_(asNamespace("base"))) {
         env <- as.environment("package:base")
         do.call("unlockBinding", list(sym = "print.data.frame", env = env))
-        env$`print.data.frame` <- function (x, ..., digits = NULL, quote = FALSE, 
+        env$`print.data.frame` <- function (x, ..., digits = NULL, quote = FALSE,
             right = TRUE, row.names = TRUE, max = NULL) {
             n <- length(row.names(x))
             if (length(x) == 0L) {
                 do.call("cat", list(
-                    sprintf(ngettext(n, "data frame with 0 columns and %d row", 
+                    sprintf(ngettext(n, "data frame with 0 columns and %d row",
                     "data frame with 0 columns and %d rows"), n),
-                    "\n", 
+                    "\n",
                     sep = "")
                 )
             }
@@ -58,25 +58,25 @@
                 )
             }
             else {
-                if (is.null(max)) 
+                if (is.null(max))
                     max <- getOption("max.print", 99999L)
-                if (!is.finite(max)) 
-                    stop("invalid 'max' / getOption(\"max.print\"): ", 
+                if (!is.finite(max))
+                    stop("invalid 'max' / getOption(\"max.print\"): ",
                         max)
                 omit <- (n0 <- max%/%length(x)) < n
-                m <- as.matrix(format.data.frame(if (omit) 
+                m <- as.matrix(format.data.frame(if (omit)
                     x[seq_len(n0), , drop = FALSE]
                 else x, digits = digits, na.encode = FALSE))
-                if (!isTRUE(row.names)) 
-                    dimnames(m)[[1L]] <- if (isFALSE(row.names)) 
-                        rep.int("", if (omit) 
+                if (!isTRUE(row.names))
+                    dimnames(m)[[1L]] <- if (isFALSE(row.names))
+                        rep.int("", if (omit)
                         n0
                         else n)
                     else row.names
                 do.call("print", list(m, ..., quote = quote, right = right, max = max))
-                if (omit) 
+                if (omit)
                     do.call("cat", list(
-                        " [ reached 'max' / getOption(\"max.print\") -- omitted", 
+                        " [ reached 'max' / getOption(\"max.print\") -- omitted",
                         n - n0, "rows ]\n"
                         )
                     )
@@ -87,7 +87,7 @@
         env$`format.data.frame` <- function (x, ..., justify = "none")
         {
             nc <- length(x)
-            if (!nc) 
+            if (!nc)
                 return(x)
             nr <- .row_names_info(x, 2L)
             rval <- vector("list", nc)
@@ -104,28 +104,300 @@
                 warning("corrupt data frame: columns will be truncated or padded with NAs")
                 for (i in seq_len(nc)) {
                     len <- NROW(rval[[i]])
-                    if (len == nr) 
+                    if (len == nr)
                         next
                     if (length(dim(rval[[i]])) == 2L) {
-                        rval[[i]] <- if (len < nr) 
+                        rval[[i]] <- if (len < nr)
                         rbind(rval[[i]], matrix(NA, nr - len, ncol(rval[[i]])))
                         else rval[[i]][seq_len(nr), ]
                     }
                     else {
-                        rval[[i]] <- if (len < nr) 
+                        rval[[i]] <- if (len < nr)
                         c(rval[[i]], rep.int(NA, nr - len))
                         else rval[[i]][seq_len(nr)]
                     }
                 }
             }
             for (i in seq_len(nc)) {
-                if (is.character(rval[[i]]) && inherits(rval[[i]], "character")) 
+                if (is.character(rval[[i]]) && inherits(rval[[i]], "character"))
                     oldClass(rval[[i]]) <- "AsIs"
             }
-            y <- as.data.frame.list(rval, row.names = seq_len(nr), col.names = names(x), 
+            y <- as.data.frame.list(rval, row.names = seq_len(nr), col.names = names(x),
                 optional = TRUE, fix.empty.names = FALSE, cut.names = TRUE)
             attr(y, "row.names") <- row.names(x)
             return(y)
+        }
+        do.call("unlockBinding", list(sym = "rbind.data.frame", env = env))
+        env$`rbind.data.frame` <- function (
+            ...,
+            deparse.level = 1,
+            make.row.names = TRUE,
+            stringsAsFactors = FALSE,
+            factor.exclude = TRUE
+        ) {
+            match.names <- function(clabs, nmi) {
+                if(identical(clabs, nmi)) NULL
+                else if(length(nmi) == length(clabs) && all(nmi %in% clabs)) {
+                    m <- pmatch(nmi, clabs, 0L)
+                        if(any(m == 0L))
+                            stop("names do not match previous names")
+                        m
+                } else stop("names do not match previous names")
+            }
+            allargs <- list(...)
+            allargs <- allargs[lengths(allargs) > 0L]
+            if(length(allargs)) {
+                nr <- vapply(allargs, function(x)
+                            if(is.data.frame(x)) .row_names_info(x, 2L)
+                            else if(is.list(x)) length(x[[1L]])
+                            else length(x), 1L)
+            if(any(n0 <- nr == 0L)) {
+                if(all(n0)) return(allargs[[1L]]) 
+                allargs <- allargs[!n0]
+            }
+            }
+            n <- length(allargs)
+            if(n == 0L)
+            return(list2DF())
+            nms <- names(allargs)
+            if(is.null(nms))
+            nms <- character(n)
+            cl <- NULL
+            perm <- rows <- vector("list", n)
+            if(make.row.names) {
+                rlabs <- rows
+                env <- new.env()
+                env$autoRnms <- TRUE 
+                Make.row.names <- function(nmi, ri, ni, nrow) {
+                    if(nzchar(nmi)) {
+                    if(env$autoRnms) env$autoRnms <- FALSE
+                    if(ni == 0L) character()  
+                    else if(ni > 1L) paste(nmi, ri, sep = ".")
+                    else nmi
+                    }
+                    else if(env$autoRnms && nrow > 0L && identical(ri, seq_len(ni)))
+                    as.integer(seq.int(from = nrow + 1L, length.out = ni))
+                    else {
+                    if(env$autoRnms && (nrow > 0L || !identical(ri, seq_len(ni))))
+                        env$autoRnms <- FALSE
+                    ri
+                    }
+                }
+            }
+            smartX <- isTRUE(factor.exclude)
+            nrow <- 0L
+            value <- clabs <- NULL
+            all.levs <- list()
+            for(i in seq_len(n)) { 
+                xi <- allargs[[i]]
+                nmi <- nms[i]
+                if(is.matrix(xi)) allargs[[i]] <- xi <-
+                    as.data.frame(xi, stringsAsFactors = stringsAsFactors)
+                if(inherits(xi, "data.frame")) {
+                    if(is.null(cl))
+                    cl <- oldClass(xi)
+                    ri <- attr(xi, "row.names")
+                    ni <- length(ri)
+                    if(is.null(clabs)) 
+                    clabs <- names(xi)
+                    else {
+                            if(length(xi) != length(clabs))
+                                stop("numbers of columns of arguments do not match")
+                        pi <- match.names(clabs, names(xi))
+                        if( !is.null(pi) ) perm[[i]] <- pi
+                    }
+                    rows[[i]] <- seq.int(from = nrow + 1L, length.out = ni)
+                    if(make.row.names) rlabs[[i]] <- Make.row.names(nmi, ri, ni, nrow)
+                    nrow <- nrow + ni
+                    if(is.null(value)) { 
+                        value <- unclass(xi)
+                        nvar <- length(value)
+                        lxi <- vector("list", nvar)
+                        xideclared <- sapply(xi, is.declared)
+                        names(lxi) <- names(xideclared)
+                        lxi[xideclared] <- lapply(xi[xideclared], function(x) {
+                            list(
+                                labels = attr(x, "labels", exact = TRUE),
+                                na_values = attr(x, "na_values"),
+                                na_range = attr(x, "na_range")
+                            )
+                        })
+                        all.levs <- vector("list", nvar)
+                        has.dim <- facCol <- ordCol <- logical(nvar)
+                        if(smartX) NA.lev <- ordCol
+                        for(j in seq_len(nvar)) {
+                        xj <- value[[j]]
+                                facCol[j] <- fac <-
+                                    if(!is.null(lj <- levels(xj))) {
+                                        all.levs[[j]] <- lj
+                                        TRUE 
+                                    } else
+                                        is.factor(xj)
+                        if(fac) {
+                        ordCol[j] <- is.ordered(xj)
+                        if(smartX && !NA.lev[j])
+                            NA.lev[j] <- anyNA(lj)
+                        }
+                        has.dim[j] <- length(dim(xj)) == 2L
+                        }
+                    }
+                    else for(j in seq_len(nvar)) {
+                        xij <- xi[[j]]
+                        if(is.null(pi) || is.na(jj <- pi[[j]])) jj <- j
+                        if(facCol[jj]) {
+                            if(length(lij <- levels(xij))) {
+                                all.levs[[jj]] <- unique(c(all.levs[[jj]], lij))
+                                if(ordCol[jj])
+                                    ordCol[jj] <- is.ordered(xij)
+                                if(smartX && !NA.lev[jj])
+                                    NA.lev[jj] <- anyNA(lij)
+                            } else if(is.character(xij))
+                                all.levs[[jj]] <- unique(c(all.levs[[jj]], xij))
+                        }
+                        if (xideclared[jj]) {
+                            labels <- c(
+                                lxi[[jj]]$labels,
+                                attr(xij, "labels", exact = TRUE)
+                            )
+                            labels <- labels[!duplicated(labels)]
+                            lxi[[jj]]$labels <- sort(labels)
+                            lxi[[jj]]$na_values <- sort(
+                                unique(
+                                    c(
+                                        lxi[[jj]]$na_values,
+                                        attr(xij, "na_values")
+                                    )
+                                )
+                            )
+                            na_range <- sort(
+                                unique(
+                                    c(
+                                        lxi[[jj]]$na_range,
+                                        attr(xij, "na_range")
+                                    )
+                                )
+                            )
+                            if (!is.null(na_range)) {
+                                lxi[[jj]]$na_range <- range(na_range)
+                            }
+                        }
+                    }
+                } 
+                else if(is.list(xi)) {
+                    ni <- range(lengths(xi))
+                    if(ni[1L] == ni[2L])
+                    ni <- ni[1L]
+                    else stop("invalid list argument: all variables should have the same length")
+                        ri <- seq_len(ni)
+                    rows[[i]] <- seq.int(from = nrow + 1L, length.out = ni)
+                    if(make.row.names) rlabs[[i]] <- Make.row.names(nmi, ri, ni, nrow)
+                    nrow <- nrow + ni
+                    if(length(nmi <- names(xi)) > 0L) {
+                        if(is.null(clabs))
+                            clabs <- nmi
+                        else {
+                                    if(length(xi) != length(clabs))
+                                        stop("numbers of columns of arguments do not match")
+                            pi <- match.names(clabs, nmi)
+                            if( !is.null(pi) ) perm[[i]] <- pi
+                        }
+                    }
+                }
+                else if(length(xi)) { 
+                    rows[[i]] <- nrow <- nrow + 1L
+                        if(make.row.names)
+                    rlabs[[i]] <- if(nzchar(nmi)) nmi else as.integer(nrow)
+                }
+            } 
+            nvar <- length(clabs)
+            if(nvar == 0L)
+            nvar <- max(lengths(allargs)) 
+            if(nvar == 0L)
+            return(list2DF())
+            pseq <- seq_len(nvar)
+            if(is.null(value)) { 
+            value <- list()
+            value[pseq] <- list(logical(nrow)) 
+                all.levs <- vector("list", nvar)
+            has.dim <- facCol <- ordCol <- logical(nvar)
+            if(smartX) NA.lev <- ordCol
+            }
+            names(value) <- clabs
+            for(j in pseq)
+            if(length(lij <- all.levs[[j]]))
+                    value[[j]] <-
+                factor(as.vector(value[[j]]), levels = lij,
+                    exclude = if(smartX) {
+                            if(!NA.lev[j]) NA 
+                        } else factor.exclude,
+                    ordered = ordCol[j])
+            if(any(has.dim)) { 
+                jdim <- pseq[has.dim]
+                if(!all(df <- vapply(jdim, function(j) inherits(value[[j]],"data.frame"), NA))) {
+                    rmax <- max(unlist(rows))
+                    for(j in jdim[!df]) {
+                dn <- dimnames(vj <- value[[j]])
+                rn <- dn[[1L]]
+                if(length(rn) > 0L) length(rn) <- rmax
+                pj <- dim(vj)[2L]
+                length(vj) <- rmax * pj
+                value[[j]] <- array(vj, c(rmax, pj), list(rn, dn[[2L]]))
+                }
+                }
+            }
+            for(i in seq_len(n)) { 
+            xi <- unclass(allargs[[i]])
+            if(!is.list(xi))
+                if((ni <- length(xi)) != nvar) {
+                if(ni && nvar %% ni != 0)
+                    warning(gettextf(
+                "number of columns of result, %d, is not a multiple of vector length %d of arg %d",
+                                nvar, ni, i), domain = NA)
+                xi <- rep_len(xi, nvar)
+                    }
+            ri <- rows[[i]]
+            pi <- perm[[i]]
+            if(is.null(pi)) pi <- pseq
+            for(j in pseq) {
+                jj <- pi[j]
+                    xij <- xi[[j]]
+                if(has.dim[jj]) {
+                value[[jj]][ri,	 ] <- xij
+                        if(!is.null(r <- rownames(xij)) &&
+                        !(inherits(xij, "data.frame") &&
+                            .row_names_info(xij) <= 0))
+                            rownames(value[[jj]])[ri] <- r
+                } else {
+                        value[[jj]][ri] <- if(is.factor(xij)) as.vector(xij) else xij
+                        if(!is.null(nm <- names(xij))) names(value[[jj]])[ri] <- nm
+                    }
+            }
+            }
+            rlabs <- if(make.row.names && !env$autoRnms) {
+                rlabs <- unlist(rlabs)
+                if(anyDuplicated(rlabs))
+                    make.unique(as.character(rlabs), sep = "")
+                else
+                    rlabs
+                } 
+            if (any(xideclared)) {
+                for (i in which(xideclared)) {
+                    value[[i]] <- declared(
+                        undeclare(value[[i]], drop = TRUE),
+                        label = attr(value[[i]], "label", exact = TRUE),
+                        labels = lxi[[i]]$labels,
+                        na_values = lxi[[i]]$na_values,
+                        na_range = lxi[[i]]$na_range
+                    )
+                }
+            }
+            if(is.null(cl)) {
+            as.data.frame(value, row.names = rlabs, fix.empty.names = TRUE,
+                    stringsAsFactors = stringsAsFactors)
+            } else {
+            structure(value, class = cl,
+                row.names = if(is.null(rlabs)) .set_row_names(nrow) else rlabs)
+            }
         }
         do.call("unlockBinding", list(sym = "order", env = env))
         env$order <- function (..., na.last = TRUE, decreasing = FALSE,
@@ -141,10 +413,10 @@
             if (any(vapply(z, function(x) {
                     is.object(x) && !is.declared(x)
                 }, logical(1L)))) {
-                z <- lapply(z, function(x) if (is.object(x)) 
+                z <- lapply(z, function(x) if (is.object(x))
                     as.vector(xtfrm(x))
                 else x)
-                return(do.call("order", c(z, list(na.last = na.last, 
+                return(do.call("order", c(z, list(na.last = na.last,
                     decreasing = decreasing, method = method))))
             }
             if (method == "auto") {
@@ -183,62 +455,70 @@
         do.call("unlockBinding", list(sym = "as.factor", env = env))
         env$as.factor <- function(
             x,
-            levels = c("default", "labels", "values", "both"),
+            levels = c("labels", "values", "both"),
+            drop_na = TRUE,
+            nolabels = FALSE,
             ordered = FALSE,
             ...
         ) {
             if (is.declared(x)) {
                 levels <- match.arg(levels)
-                label <- attr(x, "label", exact = TRUE)
-                labels <- attr(x, "labels", exact = TRUE)
-                if (levels == "both") {
-                    names(labels) <- paste0("[", labels, "] ", names(labels))
-                    attr(x, "labels") <- labels
-                    vals <- sort(unique(x), na.last = TRUE)
-                    x <- factor(
-                        as.character(undeclare(x)),
-                        levels = as.character(undeclare(vals)),
-                        ordered = ordered
-                    )
+                labels <- attr(x, "labels")
+                nv <- names_values(x, drop_na = drop_na)
+                if (isFALSE(drop_na)) {
+                    x <- undeclare(x)
                 }
-                else if (levels %in% c("default", "labels")) {
-                    levs <- unname(labels)
-                    labs <- names(labels)
+                if (levels == "labels") {
+                    if (isTRUE(nolabels)) {
+                        nv <- nv[is.element(nv, labels)]
+                        x[!is.element(drop(undeclare(x)), labels)] <- NA
+                    }
                     x <- factor(
-                        as.character(undeclare(x)),
-                        levels = sort(unique(labs)),
+                        as.character(x),
+                        levels = names(nv),
                         ordered = ordered
                     )
                 }
                 else if (levels == "values") {
-                    levels <- unique(
-                        undeclare(
-                            sort(x, na.last = TRUE),
-                            drop = TRUE
-                        )
-                    )
+                    attributes(x) <- NULL
                     x <- factor(
-                        undeclare(x, drop = TRUE),
-                        levels,
+                        x,
+                        levels = unname(nv),
+                        ordered = ordered
+                    )
+                }
+                else if (levels == "both") {
+                    nms <- paste0("[", nv, "] ", names(nv))
+                    x <- factor(
+                        nms[match(x, nv)],
+                        levels = nms,
                         ordered = ordered
                     )
                 }
                 return(x)
             }
             else {
-                if (is.factor(x)) 
+                if (is.factor(x))
                     x
                 else if (!is.object(x) && is.integer(x)) {
                     levels <- sort.int(unique.default(x))
                     f <- match(x, levels)
                     levels(f) <- as.character(levels)
-                    if (!is.null(nx <- names(x))) 
+                    if (!is.null(nx <- names(x)))
                         names(f) <- nx
                     class(f) <- "factor"
                     f
                 }
                 else factor(x)
             }
+        }
+        do.call("unlockBinding", list(sym = "drop", env = env))
+        env$drop <- function(x) {
+            if (is.declared(x)) {
+                attributes(x) <- NULL
+                return(x)
+            }
+            eval(parse(text = ".Internal(drop(x))"))
         }
     }
     if (unlockEnvironment_(asNamespace("stats"))) {
@@ -266,7 +546,7 @@
             if (missing(use)) {
                 use <- ifelse(na.rm, "na.or.complete", "everything")
             }
-            na.method <- pmatch(use, c("all.obs", "complete.obs", "pairwise.complete.obs", 
+            na.method <- pmatch(use, c("all.obs", "complete.obs", "pairwise.complete.obs",
                 "everything", "na.or.complete"))
             if (is.na(na.method)) {
                 stop("invalid 'use' argument")
@@ -296,13 +576,13 @@
             }
             xna <- is.na(x)
             if (any(xna)) {
-                if (na.rm) 
+                if (na.rm)
                     x <- x[!xna]
                 else return(rep.int(NA, 5))
             }
             x <- sort(x)
             n <- length(x)
-            if (n == 0) 
+            if (n == 0)
                 rep.int(NA, 5)
             else {
                 n4 <- floor((n + 3)/2)/2
@@ -332,10 +612,12 @@
     register_S3_method("labelled", "copy_labels", "declared")
     register_S3_method("haven", "as_factor", "declared")
     register_S3_method("haven", "zap_labels", "declared")
+    register_S3_method("haven", "zap_missing", "declared")
     register_S3_method("pillar", "pillar_shaft", "declared")
+    register_S3_method("pillar", "format", "pillar_shaft_declared_num")
+    register_S3_method("pillar", "format", "pillar_shaft_declared_chr")
     register_S3_method("vctrs", "vec_ptype_abbr", "declared")
     register_S3_method("vctrs", "vec_ptype_full", "declared")
-    register_S3_method("vctrs", "vec_ptype2", "declared")
     register_S3_method("vroom", "output_column", "declared")
     invisible()
 }

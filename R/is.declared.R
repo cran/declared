@@ -23,19 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-`is_empty` <- function(x) {
-    if (!is.atomic(x)) {
-        stopError_("'x' should be an atomic vector.")
-    }
-    empty <- is.na(x)
-    if (is.declared(x)) {
-        na_index <- attr(x, "na_index")
-        if (!is.null(na_index)) {
-            empty[na_index] <- FALSE
-        }
-    }
-    return(empty)
-}
-is.empty <- function(x) {
-    is_empty(x)
+#' @rdname declared
+#'
+#' @export
+`is.declared` <- function(x) {
+  inherits(x, "declared")
 }

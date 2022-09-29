@@ -23,6 +23,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @rdname weighted
+#' @export
 `w_mode` <- function(x, wt = NULL) {
     if (inherits(x, "haven_labelled")) {
         x <- as.declared(x)

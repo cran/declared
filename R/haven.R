@@ -23,9 +23,34 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @title Coerce to haven / labelled objects
+#' @description
+#' Convert declared labelled objects to haven labelled objects
+#' @details
+#' This is a function that reverses the process of `as.declared()`, making
+#' a round trip between `declared` and `haven_labelled_spss` classes.
+#'
+#' @return A labelled vector of class "haven_labelled_spss".
+#' @examples
+#'
+#' x <- declared(
+#'     c(1:5, -1),
+#'     labels = c(Good = 1, Bad = 5, DK = -1),
+#'     na_values = -1
+#' )
+#'
+#' x
+#'
+#' as.haven(x)
+#' @param x A declared labelled vector
+#' @param ... Other arguments used by various methods
+#' @export
+#' @name as.haven
+#' @export
 `as.haven` <- function(x, ...) {
     UseMethod("as.haven")
 }
+#' @export
 `as.haven.default` <- function(x, ...) {
     interactive <- TRUE
     dots <- list(...)
@@ -44,6 +69,7 @@
     }
     return(x)
 }
+#' @export
 `as.haven.declared` <- function(x, ...) {
     na_index <- attr(x, "na_index")
     attrx <- attributes(x)
@@ -104,6 +130,7 @@
     attributes(x) <- attrx
     return(x)
 }
+#' @export
 `as.haven.data.frame` <- function(x, ..., only_declared = TRUE, interactive = FALSE) {
     if (only_declared) {
         xdeclared <- vapply(x, is.declared, logical(1))
@@ -133,7 +160,12 @@
 `as_factor.declared` <- function(
     x, levels = c("default", "labels", "values", "both"), ordered = FALSE, ...
 ) {
-    as.factor(undeclare(x), levels = levels, ordered = ordered, ... = ...)
+  haven::as_factor(
+    as.haven(x),
+    levels = levels,
+    ordered = ordered,
+    ... = ...
+  )
 }
 `zap_labels.declared` <- function(x) {
     attr(x, "labels") <- NULL
@@ -148,16 +180,4 @@
     attr(x, "na_values") <- NULL
     attr(x, "na_range") <- NULL
     return(x)
-}
-`vec_ptype_abbr.declared` <- function(x, ...) {
-    command <- "paste0(vctrs::vec_ptype_abbr(vctrs::vec_data(unclass(undeclare(x)))), '+lbl')"
-    eval(parse(text = command))
-}
-`vec_ptype_full.declared` <- function(x, ...) {
-    command <- "paste0('declared<', vctrs::vec_ptype_full(vctrs::vec_data(unclass(undeclare(x)))), '>')"
-    eval(parse(text = command))
-}
-`vec_ptype2.declared` <- function(x, y, ...) {
-    command <- "vctrs::vec_ptype2(unclass(undeclare(x)), vctrs::vec_data(unclass(undeclare(y))), ...)"
-    eval(parse(text = command))
 }

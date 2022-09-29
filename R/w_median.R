@@ -23,6 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @rdname weighted
+#' @param ... Further arguments passed to or from other methods.
+#' @export
 `w_median` <- function (x, wt = NULL, na.rm = TRUE, ...)
 {
     metacall <- as.list(match.call())
@@ -40,9 +43,9 @@
     if (is.null(wt)) {
         return(median(x, na.rm = na.rm, ... = ...))
     }
-    return(unname(
-        w_quantile(
-            x, wt = wt, probs = 0.5, na.rm = na.rm, ... = ...
-        )
-    ))
+    x <- w_quantile(
+      x, wt = wt, probs = 0.5, na.rm = na.rm, ... = ...
+    )
+    attributes(x) <- NULL
+    return(x)
 }

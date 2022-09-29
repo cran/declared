@@ -23,6 +23,15 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @rdname weighted
+#'
+#' @param trim A fraction (0 to 0.5) of observations to be trimmed from each end
+#' of x before the mean is computed. Values of trim outside that range are
+#' taken as the nearest endpoint.
+#'
+#' @param na.rm Logical, should the empty missing values be removed?
+#'
+#' @export
 `w_mean` <- function (
     x, wt = NULL, trim = 0, na.rm = TRUE
 ) {

@@ -23,8 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @export
 `print.declared` <- function(x, ...) {
-    label <- variable_label(x)
+    label <- label(x)
     if (!is.null(label)) {
         label <- paste("", label)
     }
@@ -68,6 +69,7 @@
         return(invisible(x))
     }
 }
+#' @export
 `print.w_table` <- function(x, force = FALSE, startend = TRUE, ...) {
     toprint <- attr(x, "toprint")
     achar <- rawToChar(as.raw(c(195, 130)))
@@ -113,8 +115,7 @@
             cnms <- colnames(x)
             if (attr(x, "yvalues")) {
                 cnms <- gsub("_-_", " ", cnms)
-            }
-            else {
+            } else {
                 cnms <- unlist(lapply(strsplit(cnms, split = "_-_"), "[[", 1))
             }
             max.nchar.cols <- max(nchar(c(encodeString(cnms), x)))
@@ -194,7 +195,7 @@
                     rep(" ", max.nchar.cases + 1),
                     rep("-", nchar(sums[1])),
                     ifelse(
-                        nchar(sums[1]) < 3, 
+                        nchar(sums[1]) < 3,
                         paste(
                             rep("-", 3 - nchar(sums[1])),
                             collapse = ""
@@ -255,94 +256,44 @@
         }
     }
 }
+#' @export
 `print.fobject` <- function(x, startend = TRUE, ...) {
     class(x) <- setdiff(class(x), "fobject")
-    if (is.list(x)) {
-        nms <- apply(attr(x, "split", exact = TRUE), 1, function(x) {
-            paste(x, collapse = ", ")
-        })
-        cat(ifelse(startend, "\n", ""))
-        for (i in seq(length(x))) {
-            cat(nms[i], "\n")
-            cat(paste(c(rep("-", nchar(nms[i])), "\n"), collapse = ""))
-            if (is.null(x[[i]])) {
-                cat("No data.\n")
-            }
-            else {
-                if (is.matrix(x[[i]])) {
-                    class(x[[i]]) <- c("fobject", class(x[[i]]))
-                }
-                class(x[[i]]) <- setdiff(class(x[[i]]), "fobject")
-                print(x[[i]], startend = FALSE)
-            }
-            if (i < length(x)) {
-                cat("\n")
-            }
-        }
-        cat(ifelse(startend, "\n", ""))
-    }
-    else {
-        if (is.matrix(x)) {
-            rnms <- rownames(x)
-            max.nchar.rnms <- max(nchar(encodeString(rnms)), na.rm = TRUE)
-            for (i in seq(length(rnms))) {
-                if (nchar(rnms[i]) < max.nchar.rnms) {
-                    rnms[i] <- padLeft_(rnms[i], max.nchar.rnms - nchar(rnms[i]))
-                }
-            }
-            rownames(x) <- rnms
-        }
-        else if (is.atomic(x)) {
-            x <- matrix(
-                if (possibleNumeric_(x)) round(asNumeric_(x), 3) else x,
-                nrow = 1,
-                dimnames = list("", names(x))
+        x <- matrix(
+            if (possibleNumeric_(x)) round(asNumeric_(x), 3) else x,
+            nrow = 1,
+            dimnames = list("", names(x))
+        )
+    nax <- is.na(x)
+    pN <- apply(x, 2, possibleNumeric_)
+    nms <- colnames(x)
+    cx <- x
+    for (c in seq(ncol(x))) {
+        xc <- x[, c]
+        max.nchar.nc <- max(nchar(xc), na.rm = TRUE)
+        ndec <- 0
+        if (pN[c]) {
+            ndec <- min(numdec_(xc), 3)
+            x[, c] <- sprintf(
+                paste0("%", max.nchar.nc, ".", ndec, "f"),
+                asNumeric_(xc)
             )
         }
-        nax <- is.na(x)
-        pN <- apply(x, 2, possibleNumeric_)
-        nms <- colnames(x)
-        cx <- x
-        for (c in seq(ncol(x))) {
-            xc <- x[, c]
-            max.nchar.nc <- max(nchar(xc), na.rm = TRUE)
-            ndec <- 0
-            if (pN[c]) {
-                ndec <- min(numdec_(xc), 3)
-                x[, c] <- sprintf(
-                    paste0("%", max.nchar.nc, ".", ndec, "f"),
-                    asNumeric_(xc)
-                )
-            }
-            if (possibleNumeric_(nms[c])) {
-                nmsc <- sprintf(
-                    paste0("%", max.nchar.nc, ".", ndec, "f"),
-                    asNumeric_(nms[c])
-                )
-                if (grepl("[.]", nmsc)) {
-                    nmsc <- paste(
-                        unlist(strsplit(nmsc, split = "[.]"))[1],
-                        paste(rep(" ", ndec), collapse = "")
-                    )
-                }
-                nms[c] <- nmsc
-            }
-        }
-        x[nax] <- ""
-        max.nchars <- max(nchar(c(encodeString(nms), x)), na.rm = TRUE)
-        for (i in seq(length(nms))) {
-            if (nchar(nms[i]) < max.nchars) {
-                nms[i] <- padBoth_(nms[i], max.nchars - nchar(nms[i]))
-            }
-        }
-        for (i in seq(length(x))) {
-            if (nchar(x[i]) < max.nchars) {
-                x[i] <- padBoth_(x[i], max.nchars - nchar(x[i]))
-            }
-        }
-        colnames(x) <- nms
-        cat(ifelse(startend, "\n", ""))
-        print(noquote(x))
-        cat(ifelse(startend, "\n", ""))
     }
+    x[nax] <- ""
+    max.nchars <- max(nchar(c(encodeString(nms), x)), na.rm = TRUE)
+    for (i in seq(length(nms))) {
+        if (nchar(nms[i]) < max.nchars) {
+            nms[i] <- padBoth_(nms[i], max.nchars - nchar(nms[i]))
+        }
+    }
+    for (i in seq(length(x))) {
+        if (nchar(x[i]) < max.nchars) {
+            x[i] <- padBoth_(x[i], max.nchars - nchar(x[i]))
+        }
+    }
+    colnames(x) <- nms
+    cat(ifelse(startend, "\n", ""))
+    print(noquote(x))
+    cat(ifelse(startend, "\n", ""))
 }

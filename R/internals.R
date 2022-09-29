@@ -23,6 +23,88 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#' @title declared internal functions
+#' @description Functions to be used internally, only by developers and contributors.
+#' @name declared_internal
+NULL
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`format_declared` <- function(x, digits = getOption("digits")) {
+  if (!is.atomic(x)) {
+    stopError_("`x` has to be a vector.")
+  }
+  out <- format(unclass(x), digits = digits)
+  na_index <- attr(x, "na_index")
+  out[na_index] <- paste0("NA(", names(na_index), ")")
+  return(format(out, justify = "right"))
+}
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`order_declared` <- function(
+    x, na.last = NA, decreasing = FALSE, method = c("auto", "shell", "radix"),
+    empty.last = na.last, ...) {
+  if (!is.declared(x)) {
+    stopError_("`x` has to be a vector of class `declared`.")
+  }
+  if (!identical(empty.last, NA)) {
+    if (!(isTRUE(empty.last) | isFALSE(empty.last))) {
+      stopError_("Argument `empty.last` should be either TRUE or FALSE.")
+    }
+  }
+  method <- match.arg(method)
+  x_indexes <- seq_along(x)
+  na_index <- attr(x, "na_index")
+  na_declared <- logical(length(x))
+  na_declared[na_index] <- TRUE
+  na_empty <- is.empty(x)
+  declared_indexes <- c()
+  if (any(na_declared)) {
+    x <- undeclare(x)
+    nms <- names(na_index)
+    if (possibleNumeric_(nms)) {
+      nms <- asNumeric_(nms)
+    }
+    declared_indexes <- unname(na_index[order(nms, decreasing = decreasing, method = method)])
+  }
+  attributes(x) <- NULL
+  x_indexes <- x_indexes[!(is.na(x) | na_declared)]
+  x <- x[!(is.na(x) | na_declared)]
+  res <- c()
+  if (isFALSE(na.last)) {
+    if (isFALSE(empty.last)) {
+      res <- c(which(na_empty), declared_indexes)
+    }
+    if (isTRUE(empty.last)) {
+      res <- c(declared_indexes, which(na_empty))
+    }
+  }
+  res <- c(res, x_indexes[order(unclass(x), decreasing = decreasing, method = method)])
+  if (isTRUE(na.last)) {
+    if (isTRUE(empty.last)) {
+      res <- c(res, declared_indexes, which(na_empty))
+    }
+    if (isFALSE(empty.last)) {
+      res <- c(res, which(na_empty), declared_indexes)
+    }
+  }
+  return(res)
+}
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`value_labels` <- function(...) {
+  .Deprecated(msg = "Function value_labels() is deprecated, use labels()\n")
+  labels(...)
+}
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`variable_label` <- function(...) {
+  .Deprecated(msg = "Function variable_label() is deprecated, use label()\n")
+  label(...)
+}
 `likely_type` <- function(x) {
     type <- NULL
     if (is.numeric(x)) {
@@ -44,21 +126,18 @@
         return(x)
     }
     x <- trimstr_(tolower(unlist(strsplit(x, split = ","))))
-    if (is.null(x)) {
-        return(x)
-    }
     mlevels <- c(
         "categorical", "nominal", "ordinal",
         "quantitative", "interval", "ratio", "discrete", "continuous"
     )
-    if (any(x == "qualitative")) {
-        x[x == "qualitative"] <- "categorical"
+    if (any(wx <- x == "qualitative")) {
+        x[wx] <- "categorical"
     }
-    if (any(x == "metric")) {
-        x[x == "metric"] <- "quantitative"
+    if (any(wx <- x == "metric")) {
+        x[wx] <- "quantitative"
     }
-    if (any(x == "numeric")) {
-        x[x == "numeric"] <- "quantitative"
+    if (any(wx <- x == "numeric")) {
+        x[wx] <- "quantitative"
     }
     position <- pmatch(x, mlevels)
     if (any(is.na(position))) {
@@ -111,12 +190,7 @@
         return(paste(mlevels[unique(sort(c(first, cpos)))], collapse = ", "))
     }
     else {
-        if (cpos == first) {
-            return(mlevels[first])
-        }
-        else {
-            return(paste(c(mlevels[first], mlevels[cpos]), collapse = ", "))
-        }
+        return(paste(c(mlevels[first], mlevels[cpos]), collapse = ", "))
     }
 }
 `likely_measurement` <- function(x) {
@@ -178,70 +252,26 @@
     }
     return(misvals)
 }
-`format_declared` <- function(x, digits = getOption("digits")) {
-    if (!is.atomic(x)) {
-        stopError_("`x` has to be a vector.")
-    }
-    out <- format(unclass(x), digits = digits)
-    na_index <- attr(x, "na_index")
-    out[na_index] <- paste0("NA(", names(na_index), ")")
-    return(format(out, justify = "right"))
-}
-`order_declared` <- function(x, na.last = NA, decreasing = FALSE, method = c("auto",
-    "shell", "radix"), empty.last = na.last) {
-    if (!is.declared(x)) {
-        stopError_("`x` has to be a vector of class `declared`.")
-    }
-    if (!identical(empty.last, NA)) {
-        if (!(isTRUE(empty.last) | isFALSE(empty.last))) {
-            stopError_("Argument `empty.last` should be either TRUE or FALSE.")
-        }
-    }
-    method <- match.arg(method)
-    x_indexes <- seq_along(x)
-    na_index <- attr(x, "na_index")
-    na_declared <- logical(length(x))
-    na_declared[na_index] <- TRUE
-    na_empty <- is.empty(x)
-    declared_indexes <- c()
-    if (any(na_declared)) {
-        x <- undeclare(x)
-        nms <- names(na_index)
-        if (possibleNumeric_(nms)) {
-            nms <- asNumeric_(nms)
-        }
-        declared_indexes <- unname(na_index[order(nms, decreasing = decreasing, method = method)])
-    }
-    attributes(x) <- NULL
-    x_indexes <- x_indexes[!(is.na(x) | na_declared)]
-    x <- x[!(is.na(x) | na_declared)]
-    res <- c()
-    if (isFALSE(na.last)) {
-        if (isFALSE(empty.last)) {
-            res <- c(which(na_empty), declared_indexes)
-        }
-        if (isTRUE(empty.last)) {
-            res <- c(declared_indexes, which(na_empty))
-        }
-    }
-    res <- c(res, x_indexes[order(unclass(x), decreasing = decreasing, method = method)])
-    if (isTRUE(na.last)) {
-        if (isTRUE(empty.last)) {
-            res <- c(res, declared_indexes, which(na_empty))
-        }
-        if (isFALSE(empty.last)) {
-            res <- c(res, which(na_empty), declared_indexes)
-        }
-    }
-    return(res)
-}
-`names_values` <- function(x) {
+#' @rdname declared_internal
+#' @export
+`names_values` <- function(x, drop_na = FALSE) {
     if (!inherits(x, "declared") & !inherits(x, "haven_labelled_spss")) {
         stopError_("The input should be a declared / haven_labelled_spss vector.")
     }
-    attrx <- attributes(x)
-    x <- undeclare(x)
-    attributes(x) <- NULL
+    na_values <- attr(x, "na_values")
+    if (drop_na) {
+        attr(x, "na_index") <- NULL
+        attr(x, "na_values") <- NULL
+        attrx <- attributes(x)
+        if (!is.null(attrx$labels)) {
+            attrx$labels <- attrx$labels[!is.element(attrx$labels, na_values)]
+        }
+        attributes(x) <- NULL
+    }
+    else {
+        attrx <- attributes(x)
+        x <- undeclare(x, drop = TRUE)
+    }
     labels <- attrx[["labels"]]
     x <- c(x, unname(labels))
     x <- x[!duplicated(x)]
@@ -269,7 +299,7 @@
         nms <- names(labels)
         for (i in seq(length(xnotmis))) {
             if (any(isel <- labels == xnotmis[i])) {
-                names(xnotmis)[i] <- ifelse(nms[isel] == "", xnotmis[i], nms[isel])
+                names(xnotmis)[i] <- ifelse(nzchar(nms[isel]), nms[isel], xnotmis[i])
             }
         }
     }
@@ -309,7 +339,7 @@
         stopError_("The input is not atomic.")
     }
     if (
-        !is.numeric(x) && 
+        !is.numeric(x) &&
         (possibleNumeric_(x) || all(is.na(x)))
     ) {
         x <- asNumeric_(x)
@@ -358,6 +388,9 @@
     if (is.factor(x)) {
         x <- as.character(x)
     }
+    irv <- c(194, 160)
+    multibyte_space <- rawToChar(as.raw(irv))
+    x <- gsub(multibyte_space, " ", x)
     multibyte <- grepl("[^!-~ ]", x)
     if (any(multibyte)) {
         isna[multibyte] <- TRUE
@@ -381,6 +414,9 @@
         }
         return(as.numeric(x))
     }
+    irv <- c(194, 160)
+    multibyte_space <- rawToChar(as.raw(irv))
+    x <- gsub(multibyte_space, " ", x)
     result <- rep(NA, length(x))
     multibyte <- grepl("[^!-~ ]", x)
     attributes(x) <- NULL
@@ -398,10 +434,7 @@
     isna <- is.na(x)
     result[isna] <- NA
     if (all(isna) || is.logical(x)) {
-        if (each) {
-            return(result)
-        }
-        return(FALSE)
+        return(result)
     }
     x <- asNumeric_(x)
     isnax <- is.na(x)
@@ -415,27 +448,28 @@
     return(all(result[!isna]))
 }
 `tryCatchWEM_` <- function(expr, capture = FALSE) {
-    toreturn <- list()
+    env <- new.env()
+    env$toreturn <- list()
     output <- withVisible(withCallingHandlers(
         tryCatch(expr, error = function(e) {
-            toreturn$error <<- e$message
+            env$toreturn$error <- e$message
             NULL
         }),
         warning = function(w) {
-            toreturn$warning <<- c(toreturn$warning, w$message)
+            env$toreturn$warning <- c(env$toreturn$warning, w$message)
             invokeRestart("muffleWarning")
         },
         message = function(m) {
-            toreturn$message <<- paste(toreturn$message, m$message, sep = "")
+            env$toreturn$message <- paste(env$toreturn$message, m$message, sep = "")
             invokeRestart("muffleMessage")
         }
     ))
     if (capture && output$visible && !is.null(output$value)) {
-        toreturn$output <- capture.output(output$value)
-        toreturn$value <- output$value
+        env$toreturn$output <- capture.output(output$value)
+        env$toreturn$value <- output$value
     }
-    if (length(toreturn) > 0) {
-        return(toreturn)
+    if (length(env$toreturn) > 0) {
+        return(env$toreturn)
     }
 }
 `padLeft_` <- function(x, n) {
@@ -452,27 +486,36 @@
 `unlockEnvironment_` <- function(env) {
      .Call("_unlockEnvironment", env, PACKAGE = "declared")
 }
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
 `makeTag_` <- function(...) {
     x <- as.character(c(...))
     x <- .Call("_tag", x, PACKAGE = "declared")
     class(x) <- "double"
     return(x)
 }
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
 `hasTag_` <- function(x, tag = NULL) {
     if (!is.double(x)) {
         return(logical(length(x)))
     }
-    if (!is.null(tag) && !is.atomic(tag) && (length(tag) > 1 || is.na(tag))) {
+    if (!is.null(tag) && (!is.atomic(tag) || length(tag) > 1 || is.na(tag))) {
         stopError_("`tag` should be a vector of length 1.")
     }
     if (!is.null(tag)) {
         tag <- as.character(tag)
     }
-    return(.Call("_hasTag_", x, tag, PACKAGE = "declared"))
+    return(.Call("_hasTag", x, tag, PACKAGE = "declared"))
 }
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
 `getTag_` <- function(x) {
     if (is.double(x)) {
-        x <- .Call("_getTag_", x, PACKAGE = "declared")
+        x <- .Call("_getTag", x, PACKAGE = "declared")
         if (!any(is.na(suppressWarnings(as.numeric(na.omit(x)))))) {
             x <- as.numeric(x)
         }
@@ -483,25 +526,37 @@
     }
 }
 `numdec_` <- function(x, each = FALSE, na.rm = TRUE, maxdec = 15) {
+    maxdec <- min(15, maxdec)
     pN <- possibleNumeric_(x, each = TRUE)
     if (sum(na.omit(pN)) == 0) {
         stopError_("'x' should contain at least one (possibly) numeric value.")
     }
-    result <- rep(0, length(x))
-    x <- asNumeric_(x)
-    attributes(x) <- NULL
-    result[is.na(x)] <- NA
-    hasdec <- (x %% 1) - .Machine$double.eps^0.5 > 0
-    if (any(hasdec, na.rm = TRUE)) {
-        wdec <- which(hasdec)
-        x[wdec] <- abs(x[wdec])
-        x[wdec] <- trimstr_(formatC(x[wdec] - floor(x[wdec]), digits = maxdec))
-        result[wdec] <- nchar(asNumeric_(gsub("^0.", "", x[wdec])))
+    if (is.character(x)) {
+        x <- asNumeric_(x)
     }
+    result <- rep(NA, length(x))
+    wpN <- which(pN)
+    x <- abs(x[wpN])
+    x <- x - floor(x) 
+    x <- sub("0\\.", "",
+        sub("0+$", "", 
+            format(x, scientific = FALSE, digits = max(7, maxdec))
+        )
+    )
+    if (any(w9 <- grepl("999999", x))) {
+        x[w9] <- sub(
+            "0+", "1", 
+            sub("(*)999999.*", "\\1", x[w9]) 
+        )
+    }
+    if (any(w0 <- grepl("000000", x))) {
+        x[w0] <- sub("(*)000000.*", "\\1", x[w0])
+    }
+    result[wpN] <- nchar(x)
     if (each) {
-        return(result)
+        return(pmin(result, maxdec))
     }
-    return(max(result, na.rm = na.rm))
+    return(min(maxdec, max(result, na.rm = na.rm)))
 }
 `trimstr_` <- function(x, what = " ", side = "both") {
     irv <- c(194, 160)
