@@ -124,18 +124,25 @@
     attrx$na_index <- NULL
     attrx$class <- unique(c(
             "haven_labelled_spss", "haven_labelled", "vctrs_vctr",
-            setdiff(attrx$class, c("declared", "double", "integer", "character")),
+            setdiff(
+                attrx$class,
+                c("declared", "double", "integer", "character")
+            ),
             class(x)
     ))
     attributes(x) <- attrx
     return(x)
 }
 #' @export
-`as.haven.data.frame` <- function(x, ..., only_declared = TRUE, interactive = FALSE) {
+`as.haven.data.frame` <- function(
+    x, ..., only_declared = TRUE, interactive = FALSE
+) {
     if (only_declared) {
         xdeclared <- vapply(x, is.declared, logical(1))
         if (isFALSE(interactive)) {
-            x[xdeclared] <- lapply(x[xdeclared], as.haven, interactive = FALSE, ... = ...)
+            x[xdeclared] <- lapply(
+                x[xdeclared], as.haven, interactive = FALSE, ... = ...
+            )
         }
         else {
             nms <- names(x)[xdeclared]

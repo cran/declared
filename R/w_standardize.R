@@ -48,6 +48,7 @@
         stopError_("'wt' should be an atomic vector with finite values.")
     }
     return(
-        (x - w_mean(x, wt = wt, na.rm = na.rm)) / w_sd(x, wt = wt, na.rm = na.rm)
+        (x - w_mean(x, wt = wt, na.rm = na.rm)) /
+        w_sd(x, wt = wt, na.rm = na.rm)
     )
 }

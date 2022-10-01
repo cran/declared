@@ -1,6 +1,6 @@
 Package: declared
 Title: Functions for Declared Missing Values
-Version: 0.18
+Version: 0.19
 Authors@R: 
     c(
         person(
@@ -37,9 +37,9 @@ RoxygenNote: 7.2.1
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2022-09-27 12:13:57 UTC; dusadrian
+Packaged: 2022-10-01 00:13:51 UTC; dusadrian
 Author: Adrian Dusa [aut, cre, cph] (<https://orcid.org/0000-0002-3525-9253>),
   Daniel Antal [ctb] (<https://orcid.org/0000-0001-7513-6760>)
 Maintainer: Adrian Dusa <dusa.adrian@unibuc.ro>
 Repository: CRAN
-Date/Publication: 2022-09-29 09:50:02 UTC
+Date/Publication: 2022-10-01 07:10:09 UTC

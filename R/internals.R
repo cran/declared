@@ -24,7 +24,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #' @title declared internal functions
-#' @description Functions to be used internally, only by developers and contributors.
+#' @description Functions to be used internally, only by developers and
+#' contributors.
 #' @name declared_internal
 NULL
 #' @rdname declared_internal
@@ -66,7 +67,9 @@ NULL
     if (possibleNumeric_(nms)) {
       nms <- asNumeric_(nms)
     }
-    declared_indexes <- unname(na_index[order(nms, decreasing = decreasing, method = method)])
+    declared_indexes <- unname(
+        na_index[order(nms, decreasing = decreasing, method = method)]
+    )
   }
   attributes(x) <- NULL
   x_indexes <- x_indexes[!(is.na(x) | na_declared)]
@@ -80,7 +83,10 @@ NULL
       res <- c(declared_indexes, which(na_empty))
     }
   }
-  res <- c(res, x_indexes[order(unclass(x), decreasing = decreasing, method = method)])
+  res <- c(
+    res,
+    x_indexes[order(unclass(x), decreasing = decreasing, method = method)]
+  )
   if (isTRUE(na.last)) {
     if (isTRUE(empty.last)) {
       res <- c(res, declared_indexes, which(na_empty))
@@ -147,7 +153,10 @@ NULL
     first <- unique(ifelse(position < 4, 1, 4))
     if (length(first) > 1) {
         stopError_(
-            "Measurement can not be categorical and quantitative at the same time."
+            paste(
+                "Measurement can not be categorical",
+                "and quantitative at the same time."
+            )
         )
     }
     cpos <- setdiff(position, first)
@@ -156,25 +165,21 @@ NULL
             if (any(cpos < 7)) {
                 ir <- cpos[cpos < 7]
                 if (length(ir) > 1) {
-                    stopError_(
-                        sprintf(
-                            "Measurement can not be both %s and %s at the same time.",
-                            mlevels[ir[1]],
-                            mlevels[ir[2]]
-                        )
-                    )
+                stopError_(sprintf(
+                    "Measurement can not be both %s and %s at the same time.",
+                    mlevels[ir[1]],
+                    mlevels[ir[2]]
+                ))
                 }
             }
             if (any(cpos > 6)) {
                 dc <- cpos[cpos > 6]
                 if (length(dc) > 1) {
-                    stopError_(
-                        sprintf(
-                            "Measurement can not be both %s and %s at the same time.",
-                            mlevels[dc[1]],
-                            mlevels[dc[2]]
-                        )
-                    )
+                stopError_(sprintf(
+                    "Measurement can not be both %s and %s at the same time.",
+                    mlevels[dc[1]],
+                    mlevels[dc[2]]
+                ))
                 }
             }
         }
@@ -206,7 +211,7 @@ NULL
                 return("quantitative")
             }
             else {
-                return("") 
+                return("")
             }
         }
         return("categorical")
@@ -256,7 +261,9 @@ NULL
 #' @export
 `names_values` <- function(x, drop_na = FALSE) {
     if (!inherits(x, "declared") & !inherits(x, "haven_labelled_spss")) {
-        stopError_("The input should be a declared / haven_labelled_spss vector.")
+        stopError_(
+            "The input should be a declared / haven_labelled_spss vector."
+        )
     }
     na_values <- attr(x, "na_values")
     if (drop_na) {
@@ -299,7 +306,9 @@ NULL
         nms <- names(labels)
         for (i in seq(length(xnotmis))) {
             if (any(isel <- labels == xnotmis[i])) {
-                names(xnotmis)[i] <- ifelse(nzchar(nms[isel]), nms[isel], xnotmis[i])
+                names(xnotmis)[i] <- ifelse(
+                    nzchar(nms[isel]), nms[isel], xnotmis[i]
+                )
             }
         }
     }
@@ -460,7 +469,11 @@ NULL
             invokeRestart("muffleWarning")
         },
         message = function(m) {
-            env$toreturn$message <- paste(env$toreturn$message, m$message, sep = "")
+            env$toreturn$message <- paste(
+                env$toreturn$message,
+                m$message,
+                sep = ""
+            )
             invokeRestart("muffleMessage")
         }
     ))
@@ -545,8 +558,8 @@ NULL
     )
     if (any(w9 <- grepl("999999", x))) {
         x[w9] <- sub(
-            "0+", "1", 
-            sub("(*)999999.*", "\\1", x[w9]) 
+            "0+", "1",
+            sub("(*)999999.*", "\\1", x[w9])
         )
     }
     if (any(w0 <- grepl("000000", x))) {

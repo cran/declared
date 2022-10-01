@@ -43,7 +43,9 @@
         print(noquote(format_declared(x)), ...)
         na_values <- attr(x, "na_values")
         if (!is.null(na_values)) {
-            cat(paste0("Missing values: ", paste(na_values, collapse = ", "), "\n"))
+            cat(paste0(
+                "Missing values: ", paste(na_values, collapse = ", "), "\n"
+            ))
         }
         na_range <- attr(x, "na_range")
         if (!is.null(na_range)) {
@@ -94,7 +96,9 @@
             max.nchar.xlabels <- max(nchar(encodeString(xlabels)))
             for (i in seq(length(xlabels))) {
                 if (nchar(xlabels[i]) < max.nchar.xlabels) {
-                    xlabels[i] <- padLeft_(xlabels[i], max.nchar.xlabels - nchar(xlabels[i]))
+                    xlabels[i] <- padLeft_(
+                        xlabels[i], max.nchar.xlabels - nchar(xlabels[i])
+                    )
                 }
             }
             if (attr(x, "xvalues")) {
@@ -103,7 +107,9 @@
                 max.nchar.xvalues <- max(nchar(encodeString(xvalues)))
                 for (i in seq(length(xvalues) - 1)) {
                     if (nchar(xvalues[i]) < max.nchar.xvalues) {
-                        xvalues[i] <- padLeft_(xvalues[i], max.nchar.xvalues - nchar(xvalues[i]))
+                        xvalues[i] <- padLeft_(
+                            xvalues[i], max.nchar.xvalues - nchar(xvalues[i])
+                        )
                     }
                 }
                 rnms <- paste(xlabels, xvalues)
@@ -121,7 +127,9 @@
             max.nchar.cols <- max(nchar(c(encodeString(cnms), x)))
             for (i in seq(length(cnms))) {
                 if (nchar(cnms[i]) < max.nchar.cols) {
-                    cnms[i] <- padBoth_(cnms[i], max.nchar.cols - nchar(cnms[i]))
+                    cnms[i] <- padBoth_(
+                        cnms[i], max.nchar.cols - nchar(cnms[i])
+                    )
                 }
             }
             colnames(x) <- cnms
@@ -148,7 +156,9 @@
             }
             values <- gsub(paste(tick, collapse = "|"), "'", attr(x, "values"))
             labels <- gsub(paste(tick, collapse = "|"), "'", attr(x, "labels"))
-            na_values <- gsub(paste(tick, collapse = "|"), "'", attr(x, "na_values"))
+            na_values <- gsub(
+                paste(tick, collapse = "|"), "'", attr(x, "na_values")
+            )
             first_missing <- Inf
             if (any(is.element(values, na_values))) {
                 first_missing <- which(is.element(values, na_values))[1]
@@ -158,20 +168,32 @@
             }
             rnms <- labels
             if (show_values) {
-                values <- formatC(as.character(values), digits = max(nchar(values)) - 1, flag = " ")
+                values <- formatC(
+                    as.character(values),
+                    digits = max(nchar(values)) - 1,
+                    flag = " "
+                )
                 labels[!is.na(labels)][values == labels[!is.na(labels)]] <- ""
-                rnms[!is.na(labels)] <- paste(labels[!is.na(labels)], values, sep = " ")
+                rnms[!is.na(labels)] <- paste(labels[!is.na(labels)], values)
             }
             rnms[is.na(labels)] <- "NA"
             max.nchar.cases <- max(nchar(encodeString(rnms)))
             for (i in seq(length(rnms))) {
                 if (nchar(rnms[i]) < max.nchar.cases) {
-                    rnms[i] <- padLeft_(rnms[i], max.nchar.cases - nchar(rnms[i]))
+                    rnms[i] <- padLeft_(
+                        rnms[i], max.nchar.cases - nchar(rnms[i])
+                    )
                 }
             }
             sums <- colSums(x[, 1:3])
             fres <- formatC(as.character(c(x$fre, sums[1])), format = "s")
-            fres <- paste(sprintf(paste("%", max(3, nchar(sums[1])), "s", sep = ""), fres), "")
+            fres <- paste(
+                sprintf(
+                    paste("%", max(3, nchar(sums[1])), "s", sep = ""),
+                    fres
+                ),
+                ""
+            )
             x$rel <- formatC(x$rel, digits = 3, format = "f")
             rel <- sprintf("% 5s", x$rel)
             x$per <- formatC(x$per, digits = 1, format = "f")
@@ -184,7 +206,10 @@
             cpd <- sprintf(paste("% 5s", sep = ""), cpd)
             miseparator <- paste(
                 c(
-                    rep(" ", ifelse(max.nchar.cases > 5, max.nchar.cases - 5, 0)),
+                    rep(
+                        " ",
+                        ifelse(max.nchar.cases > 5, max.nchar.cases - 5, 0)
+                    ),
                     rep("-", min(max.nchar.cases, 5) + 1 * (sums[1] >= 1000)),
                     "\n"
                 ),
@@ -202,19 +227,27 @@
                         ),
                         ""
                     ),
-                    sprintf("-------------------%s\n", ifelse(valid, "------", ""))
+                    sprintf(
+                        "-------------------%s\n",
+                        ifelse(valid, "------", "")
+                    )
                 ),
                 collapse = ""
             )
             if (nrow(x) > 100 & !force) {
-                stopError_("It looks like a lot of categories. If you really want to print it, use:\nprint(x, force = TRUE)")
+                stopError_(paste(
+                    "It looks like a lot of categories. If you really want to",
+                    "print it, use:\nprint(x, force = TRUE)"
+                ))
             }
             cat(ifelse(startend, "\n", ""))
             cat(
                 paste(
                     rep(
                         " ",
-                        max.nchar.cases + ifelse(nchar(sums[1]) > 4, nchar(sums[1]) - 4, 0)
+                        max.nchar.cases + ifelse(
+                            nchar(sums[1]) > 4, nchar(sums[1]) - 4, 0
+                        )
                     ),
                     collapse = ""
                 ),
@@ -231,7 +264,10 @@
                 }
                 if (valid) {
                     if (i < first_missing) {
-                        cat(rnms[i], fres[i], rel[i], per[i], vld[i], cpd[i], "\n")
+                        cat(
+                            rnms[i], fres[i], rel[i], per[i], vld[i], cpd[i],
+                            "\n"
+                        )
                     }
                     else {
                         cat(rnms[i], fres[i], rel[i], per[i], "\n")

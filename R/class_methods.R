@@ -24,7 +24,9 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #' @export
-`as.character.declared` <- function(x, drop_na = TRUE, values = FALSE, nolabels = FALSE, ...) {
+`as.character.declared` <- function(
+  x, drop_na = TRUE, values = FALSE, nolabels = FALSE, ...
+) {
   allabels <- names_values(x, drop_na = drop_na)
   labels <- labels(x)
   if (isFALSE(drop_na)) {
@@ -45,7 +47,9 @@
   attrx <- attributes(x)
   x <- undeclare(x)
   x <- NextMethod()
-  declared(x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]])
+  declared(
+    x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]]
+  )
 }
 #' @export
 `[<-.declared` <- function(x, i, value) {
@@ -53,7 +57,9 @@
   value <- undeclare(value)
   x <- undeclare(x)
   x <- NextMethod()
-  declared(x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]])
+  declared(
+    x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]]
+  )
 }
 #' @export
 `c.declared` <- function(...) {
@@ -98,7 +104,9 @@
                 compatible[j] <- TRUE
               }
               else {
-                if (any(is.element(seq(nai[1], nai[2]), seq(naj[1], naj[2]))) > 0) {
+                if (
+                  any(is.element(seq(nai[1], nai[2]), seq(naj[1], naj[2]))) > 0
+                ) {
                   compatible[i] <- TRUE
                   compatible[j] <- TRUE
                 }

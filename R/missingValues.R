@@ -30,7 +30,13 @@
   xchar <- attr(x, "xchar")
   attr(x, "xchar") <- NULL
   class(x) <- setdiff(class(x), "declared")
-  other_classes <- setdiff(class(x), c("integer", "double", "character", "numeric", "complex", "haven_labelled", "haven_labelled_spss", "vctrs_vctr"))
+  other_classes <- setdiff(
+    class(x),
+    c(
+      "integer", "double", "character", "numeric", "complex",
+      "haven_labelled", "haven_labelled_spss", "vctrs_vctr"
+    )
+  )
   notna <- !is.na(value)
   x[notna] <- NA
   if (!all(is.na(x)) & !xchar) {

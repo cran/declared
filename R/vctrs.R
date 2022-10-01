@@ -24,10 +24,18 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 `vec_ptype_abbr.declared` <- function(x, ...) {
-    command <- "paste0(vctrs::vec_ptype_abbr(vctrs::vec_data(unclass(undeclare(x)))), '+lbl')"
-    eval(parse(text = command))
+    command <- "vctrs::vec_ptype_abbr(vctrs::vec_data(unclass(undeclare(x))))"
+    return(
+        paste0(eval(parse(text = command)), "+lbl")
+    )
 }
 `vec_ptype_full.declared` <- function(x, ...) {
-    command <- "paste0('declared<', vctrs::vec_ptype_full(vctrs::vec_data(unclass(undeclare(x)))), '>')"
-    eval(parse(text = command))
+    command <- "vctrs::vec_ptype_full(vctrs::vec_data(unclass(undeclare(x))))"
+    return(
+        paste0(
+            "declared<",
+            eval(parse(text = command)),
+            ">"
+        )
+    )
 }

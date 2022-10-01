@@ -39,21 +39,33 @@
     if (is.numeric(x)) {
         val <- val_num_pillar_info(x)
         lbl <- lbl_pillar_info(x)
-        mw <- max(val$disp_short$lhs_ws + val$disp_short$main_wid + lbl$wid_short)
+        mw <- max(
+            val$disp_short$lhs_ws + val$disp_short$main_wid + lbl$wid_short
+        )
         w <- max(val$disp_full$lhs_ws + val$disp_full$main_wid + lbl$wid_full)
-        eval(parse(text = "pillar::new_pillar_shaft(list(val = val, lbl = lbl), min_width = mw, width = w, class = 'pillar_shaft_declared_num')"))
+        eval(parse(text = paste(
+            "pillar::new_pillar_shaft(list(val = val, lbl = lbl),",
+            "min_width = mw, width = w, class = 'pillar_shaft_declared_num')"
+        )))
     }
     else {
         val <- val_chr_pillar_info(x)
         lbl <- lbl_pillar_info(x)
         mw <- max(val$wid_short + lbl$wid_short)
         w <- max(val$wid_full + lbl$wid_full)
-        eval(parse(text = "pillar::new_pillar_shaft(list(val = val, lbl = lbl), min_width = mw, width = w, class = 'pillar_shaft_declared_chr')"))
+        eval(parse(text = paste(
+            "pillar::new_pillar_shaft(list(val = val, lbl = lbl),",
+            "min_width = mw, width = w, class = 'pillar_shaft_declared_chr')"
+        )))
     }
 }
 `val_num_pillar_info` <- function(x) {
-    val_pillar <- eval(parse(text = "pillar::pillar_shaft(haven::zap_labels(undeclare(x)))"))
-    disp_short <- num_disp_components(x, val_pillar, attr(val_pillar, "min_width"))
+    val_pillar <- eval(parse(
+        text = "pillar::pillar_shaft(haven::zap_labels(undeclare(x)))"
+    ))
+    disp_short <- num_disp_components(
+        x, val_pillar, attr(val_pillar, "min_width")
+    )
     disp_full <- num_disp_components(x, val_pillar, attr(val_pillar, "width"))
     list(
         disp_short = disp_short,
@@ -63,14 +75,17 @@
 `num_disp_components` <- function(x, pillar, width) {
     display <- format(pillar, width)
     display <- trim_ws_lhs(display)
-    display[is.na(unclass(x))] <- eval(parse(text = "crayon::strip_style(display[is.na(unclass(x))])"))
+    display[is.na(unclass(x))] <- eval(parse(
+        text = "crayon::strip_style(display[is.na(unclass(x))])"
+    ))
     display_untrimmed_wid <- eval(parse(text = "pillar::get_extent(display)"))
     display_max_wid <- max(display_untrimmed_wid)
     display <- trim_ws_rhs(display)
     main_wid <- eval(parse(text = "pillar::get_extent(display)"))
     display_trimmed_rhs <- display_untrimmed_wid - main_wid
     list(
-        lhs_ws = max(main_wid + display_trimmed_rhs) - (main_wid + display_trimmed_rhs),
+        lhs_ws = max(main_wid + display_trimmed_rhs) -
+                    (main_wid + display_trimmed_rhs),
         main_wid = main_wid,
         main_txt = display,
         rhs_ws = display_trimmed_rhs
@@ -78,7 +93,9 @@
 }
 `val_chr_pillar_info` <- function(x) {
     MIN_CHR_DISPLAY <- 4
-    val_pillar <- eval(parse(text = "pillar::pillar_shaft(haven::zap_labels(x))"))
+    val_pillar <- eval(parse(
+        text = "pillar::pillar_shaft(haven::zap_labels(x))"
+    ))
     disp_full <- trim_ws_rhs(format(val_pillar, attr(val_pillar, "width")))
     wid_full <- eval(parse(text = "pillar::get_extent(disp_full)"))
     list(
@@ -92,15 +109,21 @@
     MIN_LBL_DISPLAY <- 6
     labels <- attr(x, "labels")
     if (length(labels) > 0) {
-        names(labels) <- eval(parse(text = "pillar::style_subtle(paste0(' [', names(labels), ']'))"))
+        names(labels) <- eval(parse(
+            text = "pillar::style_subtle(paste0(' [', names(labels), ']'))"
+        ))
         attr(x, "labels") <- labels
-        label_display <- eval(parse(text = "as.character(x, drop_na = FALSE, nolabels = TRUE)"))
+        label_display <- eval(parse(
+            text = "as.character(x, drop_na = FALSE, nolabels = TRUE)"
+        ))
         label_display[is.na(label_display)] <- ""
     } else {
         label_display <- character(length(x))
     }
     label_widths <- eval(parse(text = "pillar::get_extent(label_display)"))
-    label_min_widths <- ifelse(label_widths > 0, pmin(MIN_LBL_DISPLAY, label_widths), 0)
+    label_min_widths <- ifelse(
+        label_widths > 0, pmin(MIN_LBL_DISPLAY, label_widths), 0
+    )
     if (inherits(x, "declared")) {
         MIN_NA_DISPLAY <- 4
         na_display <- character(length(x))
@@ -109,7 +132,11 @@
         na_widths <- eval(parse(text = "pillar::get_extent(na_display)"))
         label_display <- paste0(na_display, label_display)
         label_widths <- label_widths + na_widths
-        label_min_widths <- label_min_widths + ifelse(label_widths > 0, pmin(MIN_NA_DISPLAY, label_widths), 0)
+        label_min_widths <- label_min_widths + ifelse(
+            label_widths > 0,
+            pmin(MIN_NA_DISPLAY, label_widths),
+            0
+        )
     }
     ret <- list(
         wid_short = label_min_widths,
@@ -129,9 +156,13 @@
     } else {
         lbl_width <- width - (vshort$lhs_ws + vshort$main_wid)
         lbl <- str_trunc(x$lbl$disp_full, lbl_width, subtle = TRUE)
-        out <- paste_with_align(vshort$main_txt, lbl, vshort$lhs_ws, vshort$rhs_ws)
+        out <- paste_with_align(
+            vshort$main_txt, lbl, vshort$lhs_ws, vshort$rhs_ws
+        )
     }
-    eval(parse(text = "pillar::new_ornament(out, width = width, align = 'right')"))
+    eval(parse(
+        text = "pillar::new_ornament(out, width = width, align = 'right')"
+    ))
 }
 `format.pillar_shaft_declared_chr` <- function(x, width, ...) {
     if (width >= max(x$val$wid_full + x$lbl$wid_short)) {
@@ -144,13 +175,17 @@
         lbl <- str_trunc(x$lbl$disp_full, width - val_widths, subtle = TRUE)
         out <- paste0(val_display, lbl)
     }
-    eval(parse(text = "pillar::new_ornament(out, width = width, align = 'left')"))
+    eval(parse(
+        text = "pillar::new_ornament(out, width = width, align = 'left')"
+    ))
 }
 `str_trunc` <- function(x, widths, subtle = FALSE) {
     str_width <- eval(parse(text = "pillar::get_extent(x)"))
     too_wide <- which(!is.na(x) & str_width > widths)
     continue_symbol <- eval(parse(text = "cli::symbol$continue"))
-    if (subtle) continue_symbol <- eval(parse(text = "pillar::style_subtle(continue_symbol)"))
+    if (subtle) continue_symbol <- eval(parse(
+        text = "pillar::style_subtle(continue_symbol)"
+    ))
     truncated <- Map(x[too_wide], widths[too_wide], f = function(item, wid) {
         aa <- eval(parse(text = "crayon::col_substr(item, 1, wid - 1)"))
         paste0(aa, continue_symbol)
