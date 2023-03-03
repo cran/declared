@@ -1,28 +1,3 @@
-# Copyright (c) 2022, Adrian Dusa
-# All rights reserved.
-# 
-# Redistribution and use in source and binary forms, with or without
-# modification, in whole or in part, are permitted provided that the
-# following conditions are met:
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * The names of its contributors may NOT be used to endorse or promote products
-#       derived from this software without specific prior written permission.
-# 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #' @title Labelled vectors with declared missing values
 #' @description
 #' The labelled vectors are mainly used to analyse social science data,
@@ -72,8 +47,10 @@
 #' variables, and additionally recognizes `"nominal"` and `"ordinal"` as
 #' categorical, and similarly recognizes `"interval"`, `"ratio"`,
 #' `"discrete"` and `"continuous"` as quantitative.
-#' @return A labelled vector of class "declared".
-#'   `is.declared()` returns a logical value.
+#' @return `declared()` and `as.declared()` return labelled vector of class
+#' "declared". When applied to a data frame, `as.declared()` will return a
+#' corresponding data frame with declared variables. `is.declared()` and
+#' `anyNAdeclared` return a logical value.
 #' @examples
 #'
 #' x <- declared(
@@ -122,79 +99,99 @@
 #' @param ... Other arguments used by various other methods
 #' @name declared
 NULL
+
+
 #' @rdname declared
 #' @export
-declared <- function(
+declared <- function (
     x, labels = NULL, na_values = NULL, na_range = NULL, label = NULL,
     measurement = NULL, llevels = FALSE, ...
 ) {
-  UseMethod("declared")
+  UseMethod ("declared")
 }
+
+
 #' @export
-declared.default <- function(
+declared.default <- function (
     x, labels = NULL, na_values = NULL, na_range = NULL, label = NULL,
     measurement = NULL, llevels = FALSE, ...
 ) {
-  if (is.factor(x)) {
-    nms <- levels(x)
-    if (is.null(labels)) {
-      labels <- seq(length(nms))
-      names(labels) <- nms
+  if (is.factor (x)) {
+    nms <- levels (x)
+    if (is.null (labels)) {
+      labels <- seq (length (nms))
+      names (labels) <- nms
     }
-    if (isTRUE(llevels)) {
-      labels <- labels[!possibleNumeric_(names(labels), each = TRUE)]
+
+    if (isTRUE (llevels)) {
+      labels <- labels[!possibleNumeric_ (names (labels), each = TRUE)]
     }
-    wnms <- which(is.element(na_values, nms))
-    if (length(wnms) > 0) {
+
+    wnms <- which (is.element (na_values, nms))
+
+    if (length (wnms) > 0) {
       for (i in wnms) {
-        na_values[i] <- which(nms == na_values[i])
+        na_values[i] <- which (nms == na_values[i])
       }
-      if (possibleNumeric_(na_values)) {
-        na_values <- asNumeric_(na_values)
+      if (possibleNumeric_ (na_values)) {
+        na_values <- asNumeric_ (na_values)
       }
     }
-    x <- as.numeric(x)
+
+    x <- as.numeric (x)
   }
+
   xchar <- FALSE
-  if (!is.null(labels)) {
-    nms <- names(labels)
-    if (possibleNumeric_(labels) && (possibleNumeric_(x) | all(is.na(x)))) {
-      labels <- asNumeric_(labels)
+
+  if (!is.null (labels)) {
+    nms <- names (labels)
+    if (possibleNumeric_ (labels) && (possibleNumeric_ (x) | all (is.na (x)))) {
+      labels <- asNumeric_ (labels)
     }
     else {
-      x <- as.character(x)
-      labels <- as.character(labels)
+      x <- as.character (x, values = TRUE)
+      labels <- as.character (labels, values = TRUE)
       xchar <- TRUE
       na_range <- NULL
     }
-    names(labels) <- nms
+    names (labels) <- nms
   }
-  if (!is.null(na_values)) {
-    if (possibleNumeric_(na_values) & !xchar) {
-      na_values <- asNumeric_(na_values)
+
+  if (!is.null (na_values)) {
+    if (possibleNumeric_ (na_values) & !xchar) {
+      na_values <- asNumeric_ (na_values)
     }
     else {
-      na_values <- as.character(na_values)
+      na_values <- as.character (na_values, values = TRUE)
     }
   }
-  if ((possibleNumeric_(x) | all(is.na(x))) & !xchar) {
-    x <- asNumeric_(x)
+
+  if ((possibleNumeric_ (x) | all (is.na (x))) & !xchar) {
+    x <- asNumeric_ (x)
   }
   else {
-    x <- as.character(x)
+    x <- as.character (x, values = TRUE)
   }
-  attributes(x) <- NULL
-  validate_declared(x, labels, label, na_values, na_range)
-  misvals <- all_missing_values(x, na_values, na_range, labels)
-  if (!is.null(na_range)) {
-    na_range <- sort(na_range)
+
+  attributes (x) <- NULL
+
+  validate_declared (x, labels, label, na_values, na_range)
+
+  misvals <- all_missing_values (x, na_values, na_range, labels)
+
+  if (!is.null (na_range)) {
+    na_range <- sort (na_range)
   }
-  attr(x, "xchar") <- xchar
-  missingValues(x)[is.element(x, misvals)] <- x[is.element(x, misvals)]
-  attr(x, "na_values") <- na_values
-  attr(x, "na_range") <- na_range
-  attr(x, "labels") <- labels
-  attr(x, "label") <- label
-  attr(x, "measurement") <- check_measurement(measurement)
-  return(x)
+
+  attr (x, "xchar") <- xchar
+  missingValues (x)[is.element (x, misvals)] <- x[is.element (x, misvals)]
+
+  attr (x, "na_values") <- na_values
+  attr (x, "na_range") <- na_range
+  attr (x, "labels") <- labels
+  attr (x, "label") <- label
+
+  attr (x, "measurement") <- check_measurement (measurement)
+
+  return (x)
 }

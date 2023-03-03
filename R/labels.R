@@ -1,28 +1,3 @@
-# Copyright (c) 2022, Adrian Dusa
-# All rights reserved.
-# 
-# Redistribution and use in source and binary forms, with or without
-# modification, in whole or in part, are permitted provided that the
-# following conditions are met:
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * The names of its contributors may NOT be used to endorse or promote products
-#       derived from this software without specific prior written permission.
-# 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #' @name labels
 #' @family labelling functions
 #' @title Get / Declare value labels
@@ -68,137 +43,194 @@
 #' extents of the range of missing values (for `label`).
 #'
 #' @export
-label <- function(x) {
-  UseMethod("label")
+label <- function (x) {
+  UseMethod ("label")
 }
+
+
 #' @export
-label.default <- function(x) {
-  attr(x, "label", exact = TRUE)
+label.default <- function (x) {
+  attr (x, "label", exact = TRUE)
 }
+
+
 #' @export
-label.haven_labelled_spss <- function(x) {
-  attr(x, "label", exact = TRUE)
+label.haven_labelled_spss <- function (x) {
+  attr (x, "label", exact = TRUE)
 }
+
+
 #' @export
-label.declared <- function(x) {
-  attr(x, "label", exact = TRUE)
+label.declared <- function (x) {
+  attr (x, "label", exact = TRUE)
 }
+
+
 #' @export
-label.data.frame <- function(x) {
-  lapply(x, label)
+label.data.frame <- function (x) {
+  lapply (x, label)
 }
+
+
 #' @rdname labels
 #' @param ... Other arguments, for internal use.
 #' @param value The variable label, or a list of (named) variable labels
 #' @export
-`label<-` <- function(x, ..., value) {
-  UseMethod("label<-")
+`label<-` <- function (x, ..., value) {
+  UseMethod ("label<-")
 }
+
+
 #' @export
-`label<-.declared` <- function(x, ..., value) {
-  if (!is.null(value) && length(value) > 1) {
-    stopError_("`value` should be a single character string or NULL.")
+`label<-.declared` <- function (x, ..., value) {
+  if (!is.null (value) && length (value) > 1) {
+    stopError_ ("`value` should be a single character string or NULL.")
   }
-  if (is.null(value)) {
-    attr(x, "label") <- NULL
+
+  if (is.null (value)) {
+    attr (x, "label") <- NULL
   }
   else {
-    attr(x, "label") <- as.character(value)
+    attr (x, "label") <- as.character (value)
   }
-  return(x)
+
+  return (x)
 }
+
+
 #' @export
-`label<-.haven_labelled_spss` <- function(x, ..., value) {
-  if (!is.null(value) && length(value) > 1) {
-    stopError_("`value` should be a single character string or NULL.")
+`label<-.haven_labelled_spss` <- function (x, ..., value) {
+  if (!is.null (value) && length (value) > 1) {
+    stopError_ ("`value` should be a single character string or NULL.")
   }
-  if (is.null(value)) {
-    attr(x, "label") <- NULL
+
+  if (is.null (value)) {
+    attr (x, "label") <- NULL
   }
   else {
-    attr(x, "label") <- as.character(value)
+    attr (x, "label") <- as.character (value)
   }
-  return(x)
+
+  return (x)
 }
+
+
+
+# the following two functions are deliberately taken from
+# package Hmisc to ensure functionality upon a namespace collision
+
 #' @export
-`label<-.default` <- function(x, ..., value) {
-  if(is.list(value)) {
-    stopError_("cannot assign a list to be a object label")
+`label<-.default` <- function (x, ..., value) {
+  if (is.list (value)) {
+    stopError_ ("cannot assign a list to be a object label")
   }
-  if (!is.null(value) && length(value) != 1L) {
-    stopError_("value must be character vector of length 1")
+
+  if (!is.null (value) && length (value) != 1L) {
+    stopError_ ("value must be character vector of length 1")
   }
-  attr(x, "label") <- value
-  if (! inherits(x, "labelled")) {
-    class(x) <- c("labelled", class(x))
+
+  attr (x, "label") <- value
+
+  if (! inherits (x, "labelled")) {
+    class (x) <- c ("labelled", class (x))
   }
-  return(x)
+
+  return (x)
 }
+
+
 #' @export
-`label<-.data.frame` <- function(x, self = TRUE, ..., value) {
-  if (is.list(value)) {
+`label<-.data.frame` <- function (x, self = TRUE, ..., value) {
+  if (is.list (value)) {
     self <- FALSE
   }
+
   if (self) {
-    if (!is.null(value) && length(value) > 1) {
-      stopError_("`value` should be a single character string or NULL.")
+    if (!is.null (value) && length (value) > 1) {
+      stopError_ ("`value` should be a single character string or NULL.")
     }
-    xc <- class(x)
-    xx <- unclass(x)
-    if (is.null(value)) {
-      attr(xx, "label") <- NULL
+
+    xc <- class (x)
+    xx <- unclass (x)
+    if (is.null (value)) {
+      attr (xx, "label") <- NULL
     }
     else {
-      attr(xx, "label") <- as.character(value)
+      attr (xx, "label") <- as.character (value)
     }
-    class(xx) <- xc
-    return(xx)
+
+    class (xx) <- xc
+    return (xx)
   }
   else {
-    if(length(value) != length(x)) {
-      stopError_("value must have the same length as x")
+    if (length (value) != length (x)) {
+      stopError_ ("value must have the same length as x")
     }
-    for (i in seq(along.with = x)) {
+
+    for (i in seq (along.with = x)) {
       label(x[[i]]) <- value[[i]]
     }
   }
-  return(x)
+
+  return (x)
 }
+
+
+
+
+
+
 #' @export
-labels.declared <- function(object, prefixed = FALSE, ...) {
-    labels <- attr(object, "labels", exact = TRUE)
+labels.declared <- function (object, prefixed = FALSE, ...) {
+    labels <- attr (object, "labels", exact = TRUE)
     if (prefixed) {
-        names(labels) <- paste0("[", labels, "] ", names(labels))
+        names (labels) <- paste0 ("[", labels, "] ", names (labels))
     }
-    return(labels)
+
+    return (labels)
 }
+
+
 #' @export
-labels.haven_labelled_spss <- function(object, prefixed = FALSE, ...) {
-    labels <- attr(object, "labels", exact = TRUE)
+labels.haven_labelled_spss <- function (object, prefixed = FALSE, ...) {
+    labels <- attr (object, "labels", exact = TRUE)
     if (prefixed)
-        names(labels) <- paste0("[", labels, "] ", names(labels))
+        names (labels) <- paste0 ("[", labels, "] ", names (labels))
     labels
 }
+
+
 #' @export
-labels.data.frame <- function(object, prefixed = FALSE, ...) {
-    lapply(object, labels, prefixed = prefixed)
+labels.data.frame <- function (object, prefixed = FALSE, ...) {
+    lapply (object, labels, prefixed = prefixed)
 }
+
+
+
+
 #' @rdname labels
 #' @export
-`labels<-` <- function(x, value) {
-  UseMethod("labels<-")
+`labels<-` <- function (x, value) {
+  UseMethod ("labels<-")
 }
+
+
 #' @export
-`labels<-.default` <- function(x, value) {
-  return(x)
+`labels<-.default` <- function (x, value) {
+  # do nothing
+  return (x)
 }
+
+
 #' @export
-`labels<-.declared` <- function(x, value) {
-    attr(x, "labels") <- value
-    return(x)
+`labels<-.declared` <- function (x, value) {
+    attr (x, "labels") <- value
+    return (x)
 }
+
+
 #' @export
-`labels<-.haven_labelled_spss` <- function(x, value) {
-  attr(x, "labels") <- value
-  return(x)
+`labels<-.haven_labelled_spss` <- function (x, value) {
+  attr (x, "labels") <- value
+  return (x)
 }

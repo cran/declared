@@ -78,40 +78,39 @@ color: #aaaaaa;
 }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
 div.sourceCode
-{ color: #00769e; background-color: #f1f3f5; }
+{ }
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-code span { color: #00769e; } 
-code span.al { color: #ad0000; } 
-code span.an { color: #5e5e5e; } 
-code span.at { color: #537334; } 
-code span.bn { color: #ad0000; } 
-code span.bu { } 
-code span.cf { color: #00769e; } 
-code span.ch { color: #20794d; } 
-code span.cn { color: #8f5902; } 
-code span.co { color: #006699; } 
-code span.cv { color: #5e5e5e; font-style: italic; } 
-code span.do { color: #5e5e5e; font-style: italic; } 
-code span.dt { color: #ad0000; } 
-code span.dv { color: #ad0000; } 
-code span.er { color: #ad0000; } 
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
 code span.ex { } 
-code span.fl { color: #ad0000; } 
-code span.fu { color: #cb2626; font-weight: bold; } 
-code span.im { } 
-code span.in { color: #5e5e5e; } 
-code span.kw { color: #00769e; } 
-code span.op { color: #5e5e5e; } 
-code span.ot { color: #00769e; } 
-code span.pp { color: #ad0000; } 
-code span.sc { color: #5e5e5e; } 
-code span.ss { color: #20794d; } 
-code span.st { color: #006699; } 
-code span.va { color: #111111; } 
-code span.vs { color: #006699; } 
-code span.wa { color: #5e5e5e; font-style: italic; } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
 </style>
 <script>
 // apply pandoc div.sourceCode style to pre.sourceCode instead
@@ -145,8 +144,7 @@ code span.wa { color: #5e5e5e; font-style: italic; }
 
 
 
-<style type="text/css">
-body {
+<style type="text/css">body {
 background-color: #fff;
 margin: 1em auto;
 max-width: 700px;
@@ -246,7 +244,7 @@ pre, code {
 background-color: #f7f7f7;
 border-radius: 3px;
 color: #333;
-white-space: pre-wrap;
+white-space: pre-wrap; 
 }
 pre {
 border-radius: 3px;
@@ -260,7 +258,7 @@ code {
 font-family: Consolas, Monaco, 'Courier New', monospace;
 font-size: 85%;
 }
-p>code, li>code {
+p > code, li > code {
 padding: 2px 0px;
 }
 div.figure {
@@ -295,8 +293,7 @@ border-bottom: 1px solid #f7f7f7;
 margin-left: 8px;
 font-size: 105%;
 }
-h5,
-h6 {
+h5, h6 {
 border-bottom: 1px solid #ccc;
 font-size: 105%;
 }
@@ -305,20 +302,28 @@ color: #0033dd;
 text-decoration: none;
 }
 a:hover {
-color: #6666ff;
-}
+color: #6666ff; }
 a:visited {
-color: #800080;
-}
+color: #800080; }
 a:visited:hover {
-color: #BB00BB;
-}
+color: #BB00BB; }
 a[href^="http:"] {
-text-decoration: underline;
-}
+text-decoration: underline; }
 a[href^="https:"] {
-text-decoration: underline;
-}
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
