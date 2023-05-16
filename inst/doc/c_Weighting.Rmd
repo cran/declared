@@ -2,8 +2,8 @@
 title: "c. Weighting (declared) values"
 output:
   rmarkdown::html_vignette:
-#    highlight: "declared.theme"
-#    css: "declared.css"
+    highlight: "declared.theme"
+    css: "declared.css"
 vignette: >
   %\VignetteIndexEntry{c. Weighting (declared) values}
   %\VignetteEncoding{UTF-8}
@@ -93,7 +93,7 @@ settlements.
 
 ```{r}
 # Observed proportions
-op <- proportions(with(dfm, table(Gender, Area)))
+op <- with(dfm, proportions(table(Gender, Area)))
 
 # Theoretical / population proportions:
 # 53% Rural, and 50% Females

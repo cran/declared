@@ -392,11 +392,13 @@
       [1] "Function value_labels() is deprecated, use labels()\n"
       
       $output
-      [1] "Good  Bad   DK " "   1    5   -1 "
+      [1] " value label" "     1  Good" "     5   Bad" "    -1    DK"
       
       $value
-      Good  Bad   DK 
-         1    5   -1 
+       value label
+           1  Good
+           5   Bad
+          -1    DK
       
 
 ---
@@ -525,25 +527,4 @@
       hasTag_(c(bigminustag, atag))
     Output
       [1] TRUE TRUE
-
----
-
-    Code
-      getTag_(c(atag, NA, minustag))
-    Output
-      [1] "a"  NA   "-1"
-
----
-
-    Code
-      hasTag_(makeTag_("-a"), "-a")
-    Output
-      [1] TRUE
-
----
-
-    Code
-      hasTag_(makeTag_("-ab"), "-ab")
-    Output
-      [1] TRUE
 

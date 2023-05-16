@@ -1,6 +1,6 @@
 Package: declared
 Title: Functions for Declared Missing Values
-Version: 0.20
+Version: 0.21
 Authors@R: 
     c(
         person(
@@ -29,17 +29,17 @@ Description: A zero dependency package containing functions to declare labels
     as possible with these packages, while offering an alternative in the
     objects of class "declared".
 License: GPL (>= 3)
-Suggests: admisc, covr, haven, knitr, labelled, pillar, rmarkdown,
-        spelling, testthat (>= 3.0.0), tibble, vctrs, vroom
+Suggests: admisc (> 0.31), covr, haven, knitr, labelled, pillar,
+        rmarkdown, spelling, testthat (>= 3.0.0), tibble, vctrs, vroom
 Language: en-US
 Encoding: UTF-8
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: yes
-Packaged: 2023-03-03 20:35:12 UTC; dusadrian
+Packaged: 2023-05-16 11:31:46 UTC; dusadrian
 Author: Adrian Dusa [aut, cre, cph] (<https://orcid.org/0000-0002-3525-9253>),
   Daniel Antal [ctb] (<https://orcid.org/0000-0001-7513-6760>)
 Maintainer: Adrian Dusa <dusa.adrian@unibuc.ro>
 Repository: CRAN
-Date/Publication: 2023-03-03 21:30:02 UTC
+Date/Publication: 2023-05-16 12:00:02 UTC

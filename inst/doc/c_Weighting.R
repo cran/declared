@@ -41,7 +41,7 @@ w_table(dfm$Opinion, values = TRUE)
 
 ## -----------------------------------------------------------------------------
 # Observed proportions
-op <- proportions(with(dfm, table(Gender, Area)))
+op <- with(dfm, proportions(table(Gender, Area)))
 
 # Theoretical / population proportions:
 # 53% Rural, and 50% Females

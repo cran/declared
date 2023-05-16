@@ -1,21 +1,27 @@
+values <- c(1:5, -1)
+value_labels <- c(Good = 1, Bad = 5, DK = -1)
+
 x <- declared(
-  c(1:5, -1),
-  labels = c(Good = 1, Bad = 5, DK = -1),
+  values,
+  labels = value_labels,
   na_values = -1
 )
 
 fx <- factor(
-  c(1:5, -1),
-  levels = c(1:5, -1),
+  values,
+  levels = values,
   labels = c("Good", 2:4, "Bad", "DK")
 )
+
+attr(value_labels, "print_as_df") <- TRUE
+class(value_labels) <- c("labels_df", class(value_labels))
 
 test_that("declared() works", {
   expect_true(inherits(x, "declared"))
   
   expect_equal(
     labels(x),
-    c("Good" = 1, "Bad" = 5, "DK" = -1)
+    value_labels
   )
   
   expect_equal(
@@ -55,6 +61,27 @@ test_that("declared() works", {
   expect_length(labels(declared(fx, na_values = 6, llevels = TRUE)), 3)
 
   expect_error(missing_range(x) <- 1:3)
+})
+
+
+
+xrec <- admisc::recode(
+  values,
+  cut = c(0, 3),
+  labels = c("DK", "Good", "Bad"),
+  values = c(-1, 1, 2)
+)
+
+lxrec <- labels(declared(xrec))
+class(lxrec) <- setdiff(class(lxrec), "labels_df")
+attr(lxrec, "print_as_df") <- NULL
+
+test_that(
+  "if the values already have a labels attribute, declared() recognizes it", {
+  expect_equal(
+    lxrec,
+    attr(xrec, "labels", exact = TRUE)
+  )
 })
 
 

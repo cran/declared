@@ -44,6 +44,13 @@
             return (invisible(x))
         }
 
+        large <- length(labels) > 7
+
+        if (large) {
+            rest <- length(labels) - 7
+            labels <- labels[1:7]
+        }
+
         cat ("\nLabels:", "\n", sep = "")
 
         print (
@@ -55,7 +62,35 @@
             row.names = FALSE
         )
 
+        if (large) {
+            cat(paste(
+                "# ... plus",
+                rest,
+                "more labels, use labels() to print them all.\n"
+            ))
+        }
+
         return (invisible(x))
+    }
+}
+
+
+#' @export
+`print.labels_df` <- function(x, ...) {
+    class(x) <- setdiff(class(x), "labels_df")
+    print_as_df <- isTRUE(attr(x, "print_as_df"))
+    attr(x, "print_as_df") <- NULL
+    if (print_as_df) {
+        print (
+            data.frame (
+                value = unname (x),
+                label = names (x)
+            ),
+            row.names = FALSE
+        )
+    }
+    else {
+        print(x)
     }
 }
 

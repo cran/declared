@@ -1,18 +1,22 @@
 
+lbls <- c(Good = 1, Bad = 5, DK = -1)
+
 x <- declared(
   label = "Variable label",
   c(1:5, -1),
-  labels = c(Good = 1, Bad = 5, DK = -1),
+  labels = lbls,
   na_values = -1
 )
 
+attr(lbls, "print_as_df") <- TRUE
+class(lbls) <- c("labels_df", class(lbls))
 
 test_that("labels works in declared()", {
   expect_identical(attr(x, "label"), "Variable label")
   
   expect_identical(label(x), attr(x, "label"))
   
-  expect_identical(labels(x), c(Good = 1, Bad = 5, DK = -1))
+  expect_identical(labels(x), lbls)
   
   expect_false(identical(labels(x), labels(x, prefixed = TRUE)))
 })
@@ -137,5 +141,12 @@ test_that("tests have the same output", {
 
 
 label(x) <- NULL
+labels(x) <- NULL
 label(hx) <- NULL
+labels(hx) <- NULL
 label(dfd) <- NULL
+
+test_that("labels() return NULL if not defined", {
+  expect_equal(labels(x), NULL)
+  expect_equal(labels(hx), NULL)
+})

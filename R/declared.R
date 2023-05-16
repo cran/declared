@@ -143,6 +143,10 @@ declared.default <- function (
 
   xchar <- FALSE
 
+  if (is.null (labels)) {
+    labels <- attr (x, "labels", exact = TRUE)
+  }
+
   if (!is.null (labels)) {
     nms <- names (labels)
     if (possibleNumeric_ (labels) && (possibleNumeric_ (x) | all (is.na (x)))) {
@@ -155,6 +159,14 @@ declared.default <- function (
       na_range <- NULL
     }
     names (labels) <- nms
+
+    # 2023.05.08 rationale, ex. ESS10 (integrated data file) has a variable
+    # called region, which has multiple duplicated values and labels:
+    # deprecated codes
+    #        "DEP"
+    # this is a mistake of course, but it nevertheless prevents subsetting,
+    # because of validate_declared()
+    labels <- labels[!duplicated(labels)]
   }
 
   if (!is.null (na_values)) {
