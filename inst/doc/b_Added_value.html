@@ -99,7 +99,7 @@ code span.dv { color: #ad0000; }
 code span.er { color: #ad0000; } 
 code span.ex { } 
 code span.fl { color: #ad0000; } 
-code span.fu { color: #cb2626; font-weight: bold; } 
+code span.fu { color: #af2020; font-weight: bold; } 
 code span.im { } 
 code span.in { color: #5e5e5e; } 
 code span.kw { color: #00769e; } 
@@ -417,7 +417,7 @@ and the function <code class="sourceCode r"><span class="fu">as.declared</span>(
 reverses the process:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>xh <span class="ot">&lt;-</span> <span class="fu">as.haven</span>(x2)</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>xh</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; &lt;labelled_spss&lt;double&gt;[7]&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; &lt;labelled_spss&lt;integer&gt;[7]&gt;</span></span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; [1]   1   2   3   4   5 -91 -91</span></span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; Missing values: -91, -92</span></span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; Missing range:  [-95, -91]</span></span>
@@ -527,9 +527,9 @@ factor:</p>
 <p>The base factors provide no possibility to assign specific values for
 the specific categories, and most importantly, they do not differentiate
 between valid values and (declared) missing values. To make the
-functionality consistent with the base treatment of NA values, coercing
+functionality consistent with the base treatment of <code class="sourceCode r"><span class="cn">NA</span></code> values, coercing
 to factors defaults to dropping the declared missing values because of
-the default value of the argument <code>drop_na</code>:</p>
+the default value of the argument <code class="sourceCode r">drop_na</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">as.factor</span>(x4)</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; [1] Left   Middle Right  &lt;NA&gt;  </span></span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; Levels: Left Middle Right</span></span>

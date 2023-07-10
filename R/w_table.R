@@ -160,19 +160,30 @@
 #'
 #' @param values Logical, print the values in the table rows
 #'
-#' @param valid Logical, print the percent distribution for non-missing values,
-#' if any missing values are present
+#' @param valid Logical, print separate percent distribution for valid values,
+#' if any missing values are present; for cross tables, use valid values only
 #'
 #' @param observed Logical, print the observed categories only
 #'
 #' @param margin Numeric, indicating the margin to calculate crosstab
 #' proportions: 0 from the total, 1 from row totals and 2 from column totals
+#'
+#' @param vlabel Logical, print the variable label, if existing
 #' @export
 `w_table` <- function (
     x, y = NULL, wt = NULL, values = FALSE, valid = TRUE, observed = TRUE,
-    margin = NULL
+    margin = NULL, vlabel = FALSE
 ) {
 
+    funargs <- lapply(
+        lapply(
+            match.call(), deparse)[-1],
+            function(x) gsub("'|\"|[[:space:]]", "", x
+        )
+    )
+
+    nmx <- getName_ (funargs$x)
+    
     if (inherits (x, "haven_labelled")) {
         x <- as.declared (x)
     }
@@ -186,10 +197,19 @@
     xvalues <- yvalues <- TRUE
     crosstab <- !is.null (y)
 
-    valid <- isTRUE (valid) && any (is.na (x))
+    if (!crosstab) {
+        valid <- isTRUE (valid) && any (is.na (x))
+    }
+
+    xlabel <- attr (x, "label", exact = TRUE)
 
     if (inherits (x, "declared")) {
-        xvallab <- names_values (x) # arranges missing values at the end
+        # names_values () arranges missing values at the end
+        xvallab <- names_values (
+            x,
+            drop_na = isTRUE (valid) & crosstab,
+            observed = observed
+        )
         xna_values <- attr (xvallab, "missing")
         # x <- factor (as.character (x), levels = names (xvallab))
         # sometimes (e.g. ISCO codifications in ESS) there are identical labels
@@ -224,8 +244,30 @@
             stopError_ ("Lengths of 'x' and 'y' differ.")
         }
 
+        ylabel <- attr (y, "label", exact = TRUE)
+
+        nmy <- getName_ (funargs$y)
+
+        ncharx <- nchar (nmx)
+        nchary <- nchar (nmy)
+        if (length(c (ncharx + nchary)) > 0) {
+            nchars <- max (nchar (c (nmx, nmy)))
+        }
+
+        if (length(ncharx) > 0 && ncharx > 0) {
+            nmx <- padLeft_ (nmx, nchars - ncharx)
+        }
+
+        if (length(nchary) > 0 && nchary > 0) {
+            nmy <- padLeft_ (nmy, nchars - nchary)
+        }
+
         if (inherits (y, "declared")) {
-            yvallab <- names_values (y)
+            yvallab <- names_values (
+                y,
+                drop_na = crosstab && isTRUE (valid),
+                observed = observed
+            )
             yna_values <- attr (yvallab, "missing")
             y <- factor (
                 paste (
@@ -313,6 +355,10 @@
             toprint <- round(100 * toprint, 1)
         }
 
+        if (isTRUE (vlabel)) {
+            attr (toprint, "xlabel") <- paste(nmx, xlabel, sep = ": ")
+            attr (toprint, "ylabel") <- paste(nmy, ylabel, sep = ": ")
+        }
         attr (toprint, "xvalues") <- isTRUE (values) & xvalues
         attr (toprint, "yvalues") <- isTRUE (values) & yvalues
 
@@ -358,6 +404,9 @@
             toprint$cpd <- cumsum (toprint$per)
         }
 
+        if (isTRUE (vlabel)) {
+            attr (toprint, "xlabel") <- paste(nmx, xlabel, sep = ": ")
+        }
         attr (toprint, "labels") <- labels
         attr (toprint, "values") <- as.vector (xvallab)
         attr (toprint, "show_values") <- values & xvalues

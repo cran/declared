@@ -42,7 +42,8 @@ w_table(
   values = FALSE,
   valid = TRUE,
   observed = TRUE,
-  margin = NULL
+  margin = NULL,
+  vlabel = FALSE
 )
 
 w_var(x, wt = NULL, method = NULL, na.rm = TRUE)
@@ -71,13 +72,15 @@ as x}
 
 \item{values}{Logical, print the values in the table rows}
 
-\item{valid}{Logical, print the percent distribution for non-missing values,
-if any missing values are present}
+\item{valid}{Logical, print separate percent distribution for valid values,
+if any missing values are present; for cross tables, use valid values only}
 
 \item{observed}{Logical, print the observed categories only}
 
 \item{margin}{Numeric, indicating the margin to calculate crosstab
 proportions: 0 from the total, 1 from row totals and 2 from column totals}
+
+\item{vlabel}{Logical, print the variable label, if existing}
 }
 \value{
 A vector of (weighted) values.

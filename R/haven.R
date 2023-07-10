@@ -65,59 +65,103 @@
 
 #' @export
 `as.haven.declared` <- function (x, ...) {
-    na_index <- attr (x, "na_index")
     attrx <- attributes (x)
+    declared_is_integer <- is.integer(x)
 
     # this is necessary to replace those values
     # (because of the "[<-.declared" method)
     attributes (x) <- NULL # or x <- unclass (x), but I find this cleaner
 
+    spss <- TRUE
     if (possibleNumeric_ (x) || all (is.na (x))) {
         x <- as.double(x)
         attr (x, "class") <- "double"
     }
 
-    if (!is.null (na_index)) {
-        # x[na_index] <- coerceMode_ (names (na_index))
+    na_index <- attrx$na_index
+    has_na_index <- !is.null(na_index)
 
-        #------------------------------------------
-        # detour until ReadStat deals with integers
-        all_na_values <- names (na_index)
-        if (is.numeric (x)) {
-            all_na_values <- as.numeric (all_na_values)
-        }
-        x[na_index] <- all_na_values
-        #------------------------------------------
-    }
-
-    #------------------------------------------
-    # detour until ReadStat deals with integers
     na_values <- attrx$na_values
-    pN_na_values <- possibleNumeric_ (na_values)
+    has_na_values <- !is.null(na_values)
+
+    na_range <- attrx$na_range
+    has_na_range <- !is.null(na_range)
+    pN_na_range <- possibleNumeric_ (na_range)
+
     labels <- attrx$labels
-    pN_labels <- possibleNumeric_ (labels)
-    all_num <- is.numeric (x)
+    has_labels <- !is.null(labels)
 
-    if (!is.null (na_values)) {
-        all_num <- all_num & pN_na_values
+    tagged_na_values <- NULL
+    pN_na_values <- possibleNumeric_ (na_values)
+
+    if (has_na_values && pN_na_values) {
+        na_values <- asNumeric_ (na_values)
     }
 
-    if (!is.null (labels)) {
-        all_num <- all_num & pN_labels
+    if (has_labels) {
+        pN_labels <- TRUE
+        if (length(setdiff(labels, na_values)) > 0) {
+            pN_labels <- possibleNumeric_ (setdiff(labels, na_values))
+            if (!pN_labels) {
+                x <- as.character (x)
+            }
+        }
     }
 
-    if (all_num) {
 
-        if (!is.null (na_values)) {
+    if (has_na_index) {
+        na_index_values <- names (na_index)
+
+        if (pN_na_values | pN_na_range) {
+            na_index_values <- asNumeric_ (na_index_values)
+            if (likely_type (na_index_values) == "<integer>") {
+                na_index_values <- as.integer(na_index_values)
+            }
+        }
+        else if (is.numeric (x)) {
+            if (length (setdiff (na_values, c (letters, LETTERS))) > 0) {
+                admisc::stopError ("Tagged NAs can only be created for single letter declared missing values.")
+            }
+
+            spss <- FALSE
+            attrx$na_values <- NULL
+            tagged_na_values <- makeTag_ (na_values)
+            pN_na_values <- TRUE # tagged NAs are numeric alright
+            na_index_values <- tagged_na_values[match(na_index_values, na_values)]
+            attrx$class <- setdiff(attrx$class, "integer")
+        }
+
+        x[na_index] <- na_index_values
+    }
+
+
+    if (is.numeric (x) & pN_labels & (pN_na_values | is.null(na_values))) {
+
+        if (has_labels) {
+            copy_labels <- numeric (length (labels))
+            not_missing <- !is.element(labels, na_values)
+
+            copy_labels[not_missing] <- asNumeric_ (labels[not_missing])
+
+            if (has_na_values) {
+                labels_missing <- setdiff(match(labels, na_values), NA)
+
+                if (is.null(tagged_na_values)) {
+                    copy_labels[!not_missing] <- asNumeric_ (na_values[labels_missing])
+                }
+                else {
+                    copy_labels[!not_missing] <- tagged_na_values[labels_missing]
+                }
+            }
+
+            names (copy_labels) <- names (attrx$labels)
+            attrx$labels <- copy_labels
+        }
+
+        if (has_na_values & spss) {
             na_values <- as.numeric (na_values)
             names (na_values) <- names (attrx$na_values)
             attrx$na_values <- na_values
-        }
-
-        if (!is.null (labels)) {
-            labels <- as.numeric (labels)
-            names (labels) <- names (attrx$labels)
-            attrx$labels <- labels
         }
     }
     else {
@@ -135,25 +179,44 @@
             attrx$labels <- labels
         }
     }
-    #------------------------------------------
 
     attrx$na_index <- NULL
-    # attrx$class <- c (
-    #     "haven_labelled_spss", "haven_labelled", "vctrs_vctr",
-    #     setdiff (attrx$class, "declared")
-    # )
+    attrx$class <- setdiff (
+        attrx$class,
+        c ("declared", "double", "integer", "character")
+    )
 
-    #------------------------------------------
-    # detour until ReadStat deals with integers
-    attrx$class <- unique (c (
-            "haven_labelled_spss", "haven_labelled", "vctrs_vctr",
-            setdiff (
-                attrx$class,
-                c ("declared", "double", "integer", "character")
-            ),
+    if (spss) {
+        if (declared_is_integer && grepl("integer", likely_type (x))) {
+            x <- as.integer (x)
+            attrx$class <- c ("integer", attrx$class)
+
+            if (has_na_values) {
+                class (attrx$na_values) <- "integer"
+            }
+
+            if (has_labels) {
+                class (attrx$labels) <- "integer"
+            }
+
+            if (has_na_range && all(attrx$na_range > -Inf) && all(attrx$na_range < Inf)) {
+                class (attrx$na_range) <- "integer"
+            }
+        }
+
+        attrx$class <- unique (c (
+            "haven_labelled_spss",  "haven_labelled", "vctrs_vctr",
+            attrx$class,
             class (x)
-    ))
-    #------------------------------------------
+        ))
+    }
+    else {
+        attrx$class <- unique (c (
+            "haven_labelled", "vctrs_vctr",
+            attrx$class,
+            class (x)
+        ))
+    }
 
     attributes (x) <- attrx
     return (x)

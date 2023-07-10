@@ -116,7 +116,7 @@ NULL
     type <- NULL
     if (is.numeric (x)) {
         type <- "numeric"
-        if (is.integer (x)) {
+        if (!anyTagged_(x) && (is.integer (x) || wholeNumeric_ (x))) {
             type <- "integer"
         }
     }
@@ -326,7 +326,7 @@ NULL
 
 #' @rdname declared_internal
 #' @export
-`names_values` <- function (x, drop_na = FALSE) {
+`names_values` <- function (x, drop_na = FALSE, observed = TRUE) {
 
     if (!inherits (x, "declared") & !inherits (x, "haven_labelled_spss")) {
         stopError_ (
@@ -371,6 +371,27 @@ NULL
 
     xnotmis <- sort (x[!xmis])
     xmis <- sort (x[xmis])
+    if (all (is.element (xmis, na_values))) {
+        xmis <- na_values
+    }
+
+    if (isFALSE (observed) && is.numeric (labels)) {
+        lnotmis <- length(xnotmis)
+        labels_notmis <- setdiff(labels, na_values)
+        if (labels_notmis[2] < 16) {
+            # there should be an upper limit for tables of frequencies
+            if (
+                length (labels_notmis) == 2 &&
+                xnotmis[1] == labels_notmis[1] &&
+                xnotmis[lnotmis] == labels_notmis[2] &&
+                lnotmis != (labels_notmis[2] + labels_notmis[1] == 0)
+            ) {
+                # Likert type response scale, with labels only for the
+                # first and last values
+                xnotmis <- seq(labels_notmis[1], labels_notmis[2])
+            }
+        }
+    }
 
     if (length (xmis) > 0) {
         names (xmis) <- xmis
@@ -509,9 +530,7 @@ NULL
         x <- as.character (x)
     }
 
-    irv <- c (194, 160)
-    multibyte_space <- rawToChar (as.raw (irv))
-    x <- gsub (multibyte_space, " ", x)
+    x <- gsub ("\u00a0", " ", x) # multibyte space
 
     multibyte <- grepl ("[^!-~ ]", x)
     if (any (multibyte)) {
@@ -542,9 +561,7 @@ NULL
         return (as.numeric (x))
     }
 
-    irv <- c (194, 160)
-    multibyte_space <- rawToChar (as.raw (irv))
-    x <- gsub (multibyte_space, " ", x)
+    x <- gsub ("\u00a0", " ", x) # multibyte space
 
     result <- rep (NA, length (x))
     multibyte <- grepl ("[^!-~ ]", x)
@@ -701,6 +718,28 @@ NULL
 }
 
 
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`anyTagged_` <- function(x) {
+    if (is.data.frame(x)) {
+        i <- 1
+        tagged <- FALSE
+        while(!tagged & i <= ncol(x)) {
+            tagged <- Recall(x[[i]])
+            i <- i + 1
+        }
+        return(tagged)
+    }
+
+    if (is.double(x)) {
+        return(.Call("_anyTagged", x, PACKAGE = "declared"))
+    }
+    
+    return(FALSE)
+}
+
+
 `numdec_` <- function (x, each = FALSE, na.rm = TRUE, maxdec = 15) {
 
     maxdec <- min (15, maxdec)
@@ -757,16 +796,13 @@ NULL
 
 
 `trimstr_` <- function (x, what = " ", side = "both") {
-    irv <- c (194, 160)
-    multibyte_space <- rawToChar (as.raw (irv))
-
     if (is.element (what, c ("*", "+"))) {
         what <- paste ("\\", what, sep = "")
     }
 
     what <- ifelse (
         identical (what, " "),
-        paste0 ("[[:space:]|", multibyte_space, "]"),
+        paste0 ("[[:space:]|", "\u00a0", "]"), # plus the multibyte space
         what
     )
 
@@ -777,4 +813,120 @@ NULL
     )
 
     gsub (pattern, "", x)
+}
+
+
+
+`getName_` <- function(x, object = FALSE) {
+    result <- rep ("", length (x))
+    x <- as.vector (gsub ("1-", "", gsub ("[[:space:]]", "", x)))
+                            
+    condsplit <- unlist (strsplit (x, split = ""))
+
+    startpos <- 0
+    keycode <- ""
+    
+    if (any (condsplit == "]")) {
+        startpos <- max (which (condsplit == "]"))
+        keycode <- "]"
+    }
+
+
+    if (any (condsplit == "$")) {
+        sp <- max (which (condsplit == "$"))
+        if (sp > startpos) {
+            startpos <- sp
+            keycode <- "$"
+        }
+    }
+
+
+    if (identical (keycode, "$")) {
+        if (object) {
+            return (substring (x, 1, min (which (condsplit == "$")) - 1))
+        }
+        
+        # else
+        result <- substring (x, startpos + 1)
+        
+    }
+    else if (identical (keycode, "]")) {
+        # ex. dd[,c("A","B")]
+        # or dd[,c(A,B)] if the quotes have been removed before this function
+
+        objname <- substring (x, 1, min (which (condsplit == "[")) - 1)
+
+        if (object) {
+            return (objname)
+        }
+
+        nms <- character(0)
+        for (target in c ("names", "colnames")) {
+        for (n in 1:2) {
+            if (length (nms) == 0) {
+                testnms <- tryCatchWEM_ (
+                    nms <- eval.parent (
+                        parse (
+                            text = paste (target, "(", objname, ")", sep = "")
+                        ),
+                        n = n
+                    )
+                )
+            }
+        }
+        }
+
+        # else
+        # keycode is "]"
+        # this is a matrix or a list
+        # determine where the indexing starts
+        stindex <- max (which (condsplit == "["))
+
+        stopindex <- ifelse (
+            identical (condsplit[stindex - 1], "["),
+            stindex - 2,
+            stindex - 1
+        )
+
+        # ptn = possibly the name
+         # ,c("A","B") or c(A, B)
+        ptn <- gsub ("]", "", substr (x, stindex + 1, startpos))
+
+        if (substring (ptn, 1, 1) == ",") {
+            ptn <- substring (ptn, 2)
+        }
+
+        if (substring (ptn, 1, 2) == "c(") {
+             # "A","B" or A,B
+            ptn <- substring (ptn, 3, nchar(ptn) - 1)
+        }
+        
+        ptn <- gsub ("'|\"|]|\ ", "", ptn)
+
+        ptn <- unlist (strsplit (ptn, split = ","))
+        if (length (ptn) == 1) {
+            # try for something like [, 1:2]
+            ptn <- unlist (strsplit (ptn, split = ":"))
+        }
+
+        # determine if what remains is a number or a name
+        if (possibleNumeric_ (ptn)) {
+            # it's a number (an index)
+            # see if it has column names
+            
+            if (length (nms) > 0) {
+                result <- nms[as.numeric (ptn)]
+            }
+        }
+        else if (length (nms) > 0) {
+            if (all (is.element (ptn, nms))) {
+                return (ptn)
+            }
+        }
+    }
+    else {
+        result <- x
+    }
+
+    return (gsub (",|'|\"|[[:space:]]", "", result))
 }
