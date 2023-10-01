@@ -85,7 +85,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 code span { color: #00769e; } 
 code span.al { color: #ad0000; } 
 code span.an { color: #5e5e5e; } 
-code span.at { color: #537334; } 
+code span.at { color: #609620; } 
 code span.bn { color: #ad0000; } 
 code span.bu { } 
 code span.cf { color: #00769e; } 
@@ -527,9 +527,9 @@ factor:</p>
 <p>The base factors provide no possibility to assign specific values for
 the specific categories, and most importantly, they do not differentiate
 between valid values and (declared) missing values. To make the
-functionality consistent with the base treatment of <code class="sourceCode r"><span class="cn">NA</span></code> values, coercing
-to factors defaults to dropping the declared missing values because of
-the default value of the argument <code class="sourceCode r">drop_na</code>:</p>
+functionality consistent with the base treatment of <code>NA</code>
+values, coercing to factors defaults to dropping the declared missing
+values because of the default value of the argument <code class="sourceCode r">drop_na</code>:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">as.factor</span>(x4)</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; [1] Left   Middle Right  &lt;NA&gt;  </span></span>
 <span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; Levels: Left Middle Right</span></span>
@@ -588,7 +588,7 @@ by either of the following two commands:</p>
 <p>The base factors store the categories using numeric values, which is
 also the most often scenario for the declared objects. But this is not
 at all mandatory, as the declared objects are also able to ingest
-character objects:</p>
+character vectors:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>x6 <span class="ot">&lt;-</span> <span class="fu">declared</span>(</span>
 <span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">sample</span>(</span>
 <span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>    <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;z&quot;</span>),</span>

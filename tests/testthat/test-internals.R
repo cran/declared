@@ -23,6 +23,15 @@ test_that("anyTagged_() works", {
 })
 
 
+test_that("all_missing_values() works", {
+  expect_equal(all_missing_values(c(1:5, -91), na_values = -91), -91)
+  expect_equal(
+    all_missing_values(c(1:5, -91), na_range = c(-91, -99)),
+    all_missing_values(c(1:5, -91), na_range = c(-99, -91))
+  )
+  expect_error(all_missing_values(c(1:5, -91), na_range = c(-91, -91)))
+})
+
 
 test_that("format_declared() works", {
   expect_length(format_declared(x), 6)
@@ -178,6 +187,8 @@ xr <- declared(
 
 test_that("names_values() works", {
   expect_length(names_values(x), 6)
+
+  expect_length(names_values(x, observed = FALSE), 6)
 
   expect_length(names_values(xr), 6)
 

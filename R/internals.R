@@ -8,7 +8,7 @@ NULL
 #' @keywords internal
 #' @export
 `format_declared` <- function (x, digits = getOption ("digits")) {
-  if (!is.atomic (x)) {
+  if (is.null (x) || !is.atomic (x)) {
     stopError_ ("`x` has to be a vector.")
   }
 
@@ -308,6 +308,11 @@ NULL
         }
 
         if (!is.null (na_range)) {
+            na_range <- range (na_range)
+            if (length (unique (na_range)) != 2) {
+                stopError_ ("`na_range` must have two unique values.")
+            }
+
             uniques <- sort (unique (x[x >= na_range[1] & x <= na_range[2]]))
             if (length (uniques) == 0) {
                 uniques <- na_range
@@ -460,7 +465,7 @@ NULL
 
 `coerceMode_` <- function (x) {
 
-    if (!is.atomic (x)) {
+    if (is.null (x) || !is.atomic (x)) {
         stopError_ ("The input is not atomic.")
     }
 
@@ -687,7 +692,9 @@ NULL
     }
 
     if (
-        !is.null (tag) && (!is.atomic (tag) || length (tag) > 1 || is.na (tag))
+        !is.null (tag) && !(
+            is.atomic (tag) && length (tag) == 1 && !is.na (tag)
+        )
     ) {
         stopError_ ("`tag` should be a vector of length 1.")
     }
@@ -735,7 +742,7 @@ NULL
     if (is.double(x)) {
         return(.Call("_anyTagged", x, PACKAGE = "declared"))
     }
-    
+
     return(FALSE)
 }
 
@@ -820,12 +827,12 @@ NULL
 `getName_` <- function(x, object = FALSE) {
     result <- rep ("", length (x))
     x <- as.vector (gsub ("1-", "", gsub ("[[:space:]]", "", x)))
-                            
+
     condsplit <- unlist (strsplit (x, split = ""))
 
     startpos <- 0
     keycode <- ""
-    
+
     if (any (condsplit == "]")) {
         startpos <- max (which (condsplit == "]"))
         keycode <- "]"
@@ -845,10 +852,10 @@ NULL
         if (object) {
             return (substring (x, 1, min (which (condsplit == "$")) - 1))
         }
-        
+
         # else
         result <- substring (x, startpos + 1)
-        
+
     }
     else if (identical (keycode, "]")) {
         # ex. dd[,c("A","B")]
@@ -900,7 +907,7 @@ NULL
              # "A","B" or A,B
             ptn <- substring (ptn, 3, nchar(ptn) - 1)
         }
-        
+
         ptn <- gsub ("'|\"|]|\ ", "", ptn)
 
         ptn <- unlist (strsplit (ptn, split = ","))
@@ -913,7 +920,7 @@ NULL
         if (possibleNumeric_ (ptn)) {
             # it's a number (an index)
             # see if it has column names
-            
+
             if (length (nms) > 0) {
                 result <- nms[as.numeric (ptn)]
             }
