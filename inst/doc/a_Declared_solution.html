@@ -419,7 +419,7 @@ interpreted as) regular <code>NA</code> missing values in R.</p>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">na_value =</span> <span class="sc">-</span><span class="dv">91</span></span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>x2</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; &lt;declared&lt;integer&gt;[6]&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; &lt;declared&lt;numeric&gt;[6]&gt;</span></span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; [1]       1       2       3       4       5 NA(-91)</span></span>
 <span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; Missing values: -91</span></span>
 <span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -475,7 +475,7 @@ difference:</p>
 <p>All missing values, empty and declared, play well with the NA
 oriented, base functions such as <code class="sourceCode r"><span class="fu">na.omit</span>()</code> or <code class="sourceCode r"><span class="fu">na.exclude</span>()</code>:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">na.omit</span>(x2)</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; &lt;declared&lt;integer&gt;[5]&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; &lt;declared&lt;numeric&gt;[5]&gt;</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; [1] 1 2 3 4 5</span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; Missing values: -91</span></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; </span></span>

@@ -7,7 +7,7 @@
     }
 
     if (
-        is.null(x) || !is.atomic (x) || !(
+        is.null (x) || !is.atomic (x) || !(
             is.numeric (x) || is.complex (x) || is.logical (x)
         )
     ) {
@@ -25,7 +25,7 @@
     }
 
     if (
-        !is.null(wt) && !(
+        !is.null (wt) && !(
             is.atomic (wt) && all (is.finite (na.omit (wt)))
         )
     ) {

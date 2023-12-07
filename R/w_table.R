@@ -138,10 +138,13 @@
 #' # Weighting: observed proportions
 #' op <- proportions(with(DF, table(Gender, Area)))
 #'
-#' # Theoretical proportions: 53% Rural, and 50% Females
-#' tp <- rep(c(0.53, 0.47), each = 2) * rep(c(0.498, 0.502), 2) / op
+#' # Theoretical proportions: 53% Rural, and 50.2% Females
+#' tp <- rep(c(0.53, 0.47), each = 2) * rep(c(0.498, 0.502), 2)
 #'
-#' DF$fweight <- tp[match(10 * DF$Area + DF$Gender, c(11, 12, 21, 22))]
+#' # Corrections by strata
+#' fweights <- tp / op
+#'
+#' DF$fweight <- fweights[match(10 * DF$Area + DF$Gender, c(11, 12, 21, 22))]
 #'
 #' with(DF, w_table(Gender, wt = fweight))
 #'
@@ -200,43 +203,49 @@
     if (!crosstab) {
         valid <- isTRUE (valid) && any (is.na (x))
     }
-
+    
     xlabel <- attr (x, "label", exact = TRUE)
+    allnax <- all (is.na (x))
 
     if (inherits (x, "declared")) {
-        # names_values () arranges missing values at the end
-        xvallab <- names_values (
-            x,
-            drop_na = isTRUE (valid) & crosstab,
-            observed = observed
-        )
-        xna_values <- attr (xvallab, "missing")
-        # x <- factor (as.character (x), levels = names (xvallab))
-        # sometimes (e.g. ISCO codifications in ESS) there are identical labels
-        # with different values, and factor () complains with overlapping levels
+        allnax <- all (is.empty (x))
+        if (!allnax) {
+            # names_values () arranges missing values at the end
+            xvallab <- names_values (
+                x,
+                drop_na = isTRUE (valid) & crosstab,
+                observed = observed
+            )
 
-        xvalues <- !identical (names (xvallab), as.character (xvallab))
-        # print (head(paste (as.character (x), undeclare (x), sep = "_-_")))
+            xna_values <- attr (xvallab, "missing")
+            # x <- factor (as.character (x), levels = names (xvallab))
+            # sometimes (e.g. ISCO codifications in ESS) there are identical labels
+            # with different values, and factor () complains with overlapping levels
 
-        x <- factor (
-            paste (
-                as.character (undeclare (x)),
-                undeclare (x, drop = TRUE),
-                sep = "_-_"
-            ),
-            levels = paste (names (xvallab), xvallab, sep = "_-_")
-        )
+            xvalues <- !identical (names (xvallab), as.character (xvallab))
+            # print (head(paste (as.character (x), undeclare (x), sep = "_-_")))
+            x <- factor (
+                paste (
+                    as.character (undeclare (x)),
+                    undeclare (x, drop = TRUE),
+                    sep = "_-_"
+                ),
+                levels = paste (names (xvallab), xvallab, sep = "_-_")
+            )
+        }
     }
     else {
         xvalues <- FALSE
-        lvls <- levels (as.factor (x))
-        xvallab <- seq (length (lvls))
-        names (xvallab) <- lvls
+        if (!allnax) {
+            lvls <- levels (as.factor (x))
+            xvallab <- seq (length (lvls))
+            names (xvallab) <- lvls
+        }
     }
 
     xy <- list (x = x)
     if (crosstab) {
-        if (is.null (y) || !is.atomic (y)) {
+        if (!is.atomic (y)) {
             stopError_ ("'y' should be an atomic vector.")
         }
 
@@ -245,6 +254,7 @@
         }
 
         ylabel <- attr (y, "label", exact = TRUE)
+        allnay <- all (is.na (y))
 
         nmy <- getName_ (funargs$y)
 
@@ -263,26 +273,32 @@
         }
 
         if (inherits (y, "declared")) {
-            yvallab <- names_values (
-                y,
-                drop_na = crosstab && isTRUE (valid),
-                observed = observed
-            )
-            yna_values <- attr (yvallab, "missing")
-            y <- factor (
-                paste (
-                    as.character (undeclare (y)),
-                    undeclare (y, drop = TRUE),
-                    sep = "_-_"
-                ),
-                levels = paste (names (yvallab), yvallab, sep = "_-_")
-            )
+            allnay <- all (is.empty (y))
+            if (!allnay) {
+                yvallab <- names_values (
+                    y,
+                    drop_na = crosstab && isTRUE (valid),
+                    observed = observed
+                )
+                yna_values <- attr (yvallab, "missing")            
+
+                y <- factor (
+                    paste (
+                        as.character (undeclare (y)),
+                        undeclare (y, drop = TRUE),
+                        sep = "_-_"
+                    ),
+                    levels = paste (names (yvallab), yvallab, sep = "_-_")
+                )
+            }
         }
         else {
             yvalues <- FALSE
-            lvls <- levels (as.factor (y))
-            yvallab <- seq (length (lvls))
-            names (yvallab) <- lvls
+            if (!allnay) {
+                lvls <- levels (as.factor (y))
+                yvallab <- seq (length (lvls))
+                names (yvallab) <- lvls
+            }
         }
 
         xy$y <- y
@@ -294,7 +310,7 @@
 
 
     if (
-        !is.null(wt) && !(
+        !is.null (wt) && !(
             is.atomic (wt) && all (is.finite (na.omit (wt)))
         )
     ) {
@@ -369,8 +385,11 @@
         # class (toprint) <- c ("w_table", "matrix")
     }
     else {
-        labels <- rownames (tbl)
-        labels <- unlist (lapply (strsplit (labels, split = "_-_"), "[[", 1))
+        labels <- NULL
+        if (nrow(tbl) > 0) {
+            labels <- rownames (tbl)
+            labels <- unlist (lapply (strsplit (labels, split = "_-_"), "[[", 1))
+        }
 
         if (any (is.na (x))) {
             tbl <- c (tbl, sum (is.na (x)))
@@ -385,7 +404,7 @@
 
         toprint$rel <- proportions (toprint$fre)
         toprint$per <- toprint$rel * 100
-
+        
         if (valid & (length (missing) > 0 | any (is.na (labels)))) {
             vld <- toprint$fre
             nalabels <- is.element (xvallab, xna_values)

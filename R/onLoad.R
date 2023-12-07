@@ -150,8 +150,6 @@
             stringsAsFactors = FALSE,
             factor.exclude = TRUE
         ) {
-
-
             match.names <- function (clabs, nmi) {
                 if (identical (clabs, nmi)) NULL
                 else if (
@@ -747,9 +745,9 @@
                 stop ("invalid 'use' argument")
             }
 
-            if (!is.null(x)) {
-                if (is.data.frame(x)) {
-                    x <- as.matrix(x)
+            if (!is.null (x)) {
+                if (is.data.frame (x)) {
+                    x <- as.matrix (x)
                 }
                 else {
                     stopifnot(is.atomic (x))
@@ -757,8 +755,8 @@
             }
 
             if (!is.null(y)) {
-                if (is.data.frame(y)) {
-                    y <- as.matrix(y)
+                if (is.data.frame (y)) {
+                    y <- as.matrix (y)
                 }
                 else {
                     stopifnot(is.atomic (y))

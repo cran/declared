@@ -6,19 +6,24 @@
     }
 
     measurement <- attr (x, "measurement")
-
     # type <- likely_type (x)
     cat (
         paste0 (
-            "<declared",
+            "<declared<",
             # ifelse (is.null (measurement), "", paste0 (", ", measurement)),
             # ifelse (is.null (type), "", paste0 (", ", type)),
-            likely_type (x),
-            "[", length (x), "]>",
+            # likely_type (x),
+            ifelse (
+                isTRUE (attr (x, "date")),
+                "Date",
+                setdiff (class (x), "declared")[1]
+            ),
+            ">[", length (x), "]>",
             label,
             "\n"
         )
     )
+    
     if (length (x) > 0) {
         print (noquote (format_declared (x)), ...)
 
@@ -103,10 +108,10 @@
     attr (toprint, "xlabel") <- NULL
     attr (toprint, "ylabel") <- NULL
     achar <- "\u00c2"
-    tick <- tick <- c("\u00b4", "\u0060")
+    tick <- c ("\u00b4", "\u0060", "\u2018", "\u2019") # ticks and single quotes
     tick <- c (paste0 (achar, "'"), paste0 (achar, tick), tick)
 
-    if (x[1] != as.matrix(toprint)[1]) {
+    if (!all(is.na(x)) && x[1] != as.matrix(toprint)[1]) {
         # this means the original table was altered. e.g. proportions (tbl)
         class (x) <- setdiff (class (x), c ("w_table", "array"))
         names (dimnames (x)) <- NULL

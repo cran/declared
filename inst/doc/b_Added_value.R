@@ -81,7 +81,6 @@ x5
 
 ## -----------------------------------------------------------------------------
 as.factor(x4)
-as.factor(x4, drop_na = TRUE)
 
 # essentially acting as:
 as.factor(drop_na(x4))

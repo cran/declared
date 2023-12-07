@@ -8,17 +8,27 @@ NULL
 #' @keywords internal
 #' @export
 `format_declared` <- function (x, digits = getOption ("digits")) {
-  if (is.null (x) || !is.atomic (x)) {
-    stopError_ ("`x` has to be a vector.")
-  }
+    if (is.null (x) || !is.atomic (x)) {
+        stopError_ ("`x` has to be a vector.")
+    }
 
-  out <- format (unclass (x), digits = digits)
+    if (
+        is.element("Date", class (x)) || isTRUE (attr (x, "date"))) {
+        class (x) <- "Date"
+        out <- as.character (x)
+    }
+    else {
+        out <- format (unclass (x), digits = digits)
+    }
 
-  na_index <- attr (x, "na_index")
-  out[na_index] <- paste0 ("NA(", names (na_index), ")")
+    na_index <- attr (x, "na_index")
 
-  # format again to make sure all elements have same width
-  return (format (out, justify = "right"))
+    if (!is.null (na_index)) {
+        out[na_index] <- paste0 ("NA(", names (na_index), ")")
+    }
+
+    # format again to make sure all elements have same width
+    return (format (out, justify = "right"))
 }
 
 #' @rdname declared_internal
@@ -28,100 +38,103 @@ NULL
     x, na.last = NA, decreasing = FALSE, method = c ("auto", "shell", "radix"),
     empty.last = na.last, ...) {
 
-  if (!is.declared (x)) {
-    stopError_ ("`x` has to be a vector of class `declared`.")
-  }
-
-  if (!identical (empty.last, NA)) {
-    if (!(isTRUE (empty.last) | isFALSE (empty.last))) {
-      stopError_ ("Argument `empty.last` should be either TRUE or FALSE.")
+    if (!is.declared (x)) {
+        stopError_ ("`x` has to be a vector of class `declared`.")
     }
-  }
 
-  method <- match.arg (method)
-
-  x_indexes <- seq_along(x)
-
-  na_index <- attr (x, "na_index")
-  na_declared <- logical (length (x))
-  na_declared[na_index] <- TRUE
-  na_empty <- is.empty (x)
-
-  declared_indexes <- c ()
-
-  if (any (na_declared)) {
-    x <- undeclare (x)
-    nms <- names (na_index)
-    if (possibleNumeric_ (nms)) {
-      nms <- asNumeric_ (nms)
+    if (!identical (empty.last, NA)) {
+        if (!(isTRUE (empty.last) | isFALSE (empty.last))) {
+        stopError_ ("Argument `empty.last` should be either TRUE or FALSE.")
+        }
     }
-    declared_indexes <- unname (
-        na_index[order (nms, decreasing = decreasing, method = method)]
+
+    method <- match.arg (method)
+
+    x_indexes <- seq_along(x)
+
+    na_index <- attr (x, "na_index")
+    na_declared <- logical (length (x))
+    na_declared[na_index] <- TRUE
+    na_empty <- is.empty (x)
+
+    declared_indexes <- c ()
+
+    if (any (na_declared)) {
+        x <- undeclare (x)
+        nms <- names (na_index)
+        if (possibleNumeric_ (nms)) {
+        nms <- asNumeric_ (nms)
+        }
+        declared_indexes <- unname (
+            na_index[order (nms, decreasing = decreasing, method = method)]
+        )
+    }
+
+    attributes (x) <- NULL
+    x_indexes <- x_indexes[!(is.na (x) | na_declared)]
+    x <- x[!(is.na (x) | na_declared)]
+
+    res <- c ()
+
+    if (isFALSE (na.last)) {
+        if (isFALSE (empty.last)) {
+        res <- c (which (na_empty), declared_indexes)
+        }
+
+        if (isTRUE (empty.last)) {
+        res <- c (declared_indexes, which (na_empty))
+        }
+    }
+
+
+    res <- c (
+        res,
+        x_indexes[order (unclass (x), decreasing = decreasing, method = method)]
     )
-  }
 
-  attributes (x) <- NULL
-  x_indexes <- x_indexes[!(is.na (x) | na_declared)]
-  x <- x[!(is.na (x) | na_declared)]
 
-  res <- c ()
+    if (isTRUE (na.last)) {
+        if (isTRUE (empty.last)) {
+        res <- c (res, declared_indexes, which (na_empty))
+        }
 
-  if (isFALSE (na.last)) {
-    if (isFALSE (empty.last)) {
-      res <- c (which (na_empty), declared_indexes)
+        if (isFALSE (empty.last)) {
+        res <- c (res, which (na_empty), declared_indexes)
+        }
     }
 
-    if (isTRUE (empty.last)) {
-      res <- c (declared_indexes, which (na_empty))
-    }
-  }
-
-
-  res <- c (
-    res,
-    x_indexes[order (unclass (x), decreasing = decreasing, method = method)]
-  )
-
-
-  if (isTRUE (na.last)) {
-    if (isTRUE (empty.last)) {
-      res <- c (res, declared_indexes, which (na_empty))
-    }
-
-    if (isFALSE (empty.last)) {
-      res <- c (res, which (na_empty), declared_indexes)
-    }
-  }
-
-  return (res)
+    return (res)
 }
 
 #' @rdname declared_internal
 #' @keywords internal
 #' @export
 `value_labels` <- function (...) {
-  .Deprecated(msg = "Function value_labels() is deprecated, use labels()\n")
-  labels (...)
+    .Deprecated(msg = "Function value_labels() is deprecated, use labels()\n")
+    labels (...)
 }
 
 #' @rdname declared_internal
 #' @keywords internal
 #' @export
 `variable_label` <- function (...) {
-  .Deprecated(msg = "Function variable_label() is deprecated, use label()\n")
-  label(...)
+    .Deprecated(msg = "Function variable_label() is deprecated, use label()\n")
+    label(...)
 }
+
 
 `likely_type` <- function (x) {
     type <- NULL
-    if (is.numeric (x)) {
-        type <- "numeric"
-        if (!anyTagged_(x) && (is.integer (x) || wholeNumeric_ (x))) {
+    others <- setdiff (class (x), "declared")
+
+    if (length (others) > 0) {
+        type <- others[1]
+    }
+
+    if (identical(type, "numeric")) {
+        if (!anyTagged_ (x) && (is.integer (x) || wholeNumeric_ (x))) {
             type <- "integer"
         }
-    }
-    else if (is.character (x)) {
-        type <- "character"
     }
 
     if (!is.null (type)) {
@@ -340,23 +353,23 @@ NULL
     }
 
     na_values <- attr (x, "na_values")
+    attrx <- attributes (x)
+    labels <- getElement(attrx, "labels")
 
     if (drop_na) {
-        attr (x, "na_index") <- NULL
-        attr (x, "na_values") <- NULL
-        attrx <- attributes (x)
-        if (!is.null (attrx$labels)) {
-            attrx$labels <- attrx$labels[!is.element (attrx$labels, na_values)]
+        attrx$na_index <- NULL
+        attrx$na_values <- NULL
+
+        if (!is.null (labels)) {
+            labels <- labels[!is.element (labels, na_values)]
+            attrx$labels <- labels
         }
         attributes (x) <- NULL
     }
     else {
-        attrx <- attributes (x)
         x <- undeclare (x, drop = TRUE)
     }
 
-    # attrx[["labels"]] is the equivalent of attr (x, "labels", exact = TRUE)
-    labels <- attrx[["labels"]]
     x <- c (x, unname (labels))
     x <- x[!duplicated (x)]
     xmis <- logical (length (x))
@@ -382,7 +395,7 @@ NULL
 
     if (isFALSE (observed) && is.numeric (labels)) {
         lnotmis <- length(xnotmis)
-        labels_notmis <- setdiff(labels, na_values)
+        labels_notmis <- labels[!is.element(labels, na_values)]
         if (labels_notmis[2] < 16) {
             # there should be an upper limit for tables of frequencies
             if (
@@ -396,6 +409,11 @@ NULL
                 xnotmis <- seq(labels_notmis[1], labels_notmis[2])
             }
         }
+    }
+
+    wd <- which(duplicated(labels))
+    if (length(wd) > 0) {
+        labels <- labels[-wd]
     }
 
     if (length (xmis) > 0) {
@@ -780,9 +798,9 @@ NULL
         # A floating point number like 234.1 might have been represented as
         # 0.0999999999999943 (after subtracting the floor)
         x[w9] <- sub (
-             # last 0 becomes 1
+            # last 0 becomes 1
             "0+", "1",
-             # retains everthing <up to> the sequence
+            # retains everthing <up to> the sequence
             sub ("(*)999999.*", "\\1", x[w9])
         )
     }
@@ -896,7 +914,7 @@ NULL
         )
 
         # ptn = possibly the name
-         # ,c("A","B") or c(A, B)
+        # ,c("A","B") or c(A, B)
         ptn <- gsub ("]", "", substr (x, stindex + 1, startpos))
 
         if (substring (ptn, 1, 1) == ",") {
@@ -904,7 +922,7 @@ NULL
         }
 
         if (substring (ptn, 1, 2) == "c(") {
-             # "A","B" or A,B
+            # "A","B" or A,B
             ptn <- substring (ptn, 3, nchar(ptn) - 1)
         }
 
