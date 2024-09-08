@@ -1,6 +1,6 @@
 Package: declared
 Title: Functions for Declared Missing Values
-Version: 0.24
+Version: 0.25
 Authors@R: 
     c(
         person(
@@ -32,9 +32,9 @@ License: GPL (>= 3)
 Language: en-US
 Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2023-12-07 07:02:35 UTC; dusadrian
+Packaged: 2024-09-08 18:24:45 UTC; dusadrian
 Author: Adrian Dusa [aut, cre, cph] (<https://orcid.org/0000-0002-3525-9253>),
   Daniel Antal [ctb] (<https://orcid.org/0000-0001-7513-6760>)
 Maintainer: Adrian Dusa <dusa.adrian@unibuc.ro>
 Repository: CRAN
-Date/Publication: 2023-12-07 11:50:08 UTC
+Date/Publication: 2024-09-08 20:00:02 UTC

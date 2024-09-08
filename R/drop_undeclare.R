@@ -65,8 +65,19 @@
   attributes (x) <- NULL # or x <- unclass (x), but I find this cleaner
 
   if (!is.null (na_index)) {
-    x[na_index] <- names (na_index)
-    x <- coerceMode_ (x)
+    values <- names (na_index)
+
+    if (possibleNumeric_ (values)) {
+      if (is.integer (x)) {
+        values <- as.integer (values)
+      } else if (is.numeric (x)) {
+        values <- as.numeric (values)
+      }
+    } else {
+      x <- as.character (x)
+    }
+
+    x[na_index] <- values
   }
 
   attrx$na_index <- NULL
@@ -74,9 +85,10 @@
   attrx$na_range <- NULL
 
   if (isFALSE (drop)) {
+    attrx$class <- c("declared", class(x))
     attributes (x) <- attrx
   }
-  
+
   return (x)
 }
 

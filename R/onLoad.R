@@ -12,7 +12,7 @@
         )
     )
 
-    if (unlockEnvironment_ (asNamespace("base"))) {
+    # if (unlockEnvironment_ (asNamespace("base"))) {
 
         env <- as.environment("package:base")
         do.call ("unlockBinding", list (sym = "print.data.frame", env = env))
@@ -693,9 +693,30 @@
                 0L
             ) > 0L
         }
-    }
 
-    if (unlockEnvironment_ (asNamespace("stats"))) {
+        do.call ("unlockBinding", list (sym = "sum", env = env))
+
+        env$sum <- function (..., na.rm = FALSE) {
+            dots <- lapply (list (...), function(x) {
+                if (inherits (x, "declared")) {
+                    na_index <- attr (x, "na_index")
+                    if (!is.null (na_index)) {
+                        x <- x[-na_index]
+                    }
+                    xdate <- isTRUE (attr (x, "date"))
+                    attributes (x) <- NULL
+                    if (xdate) {
+                        x <- as.Date (x)
+                    }
+                }
+                return (x)
+            })
+
+            do.call(.Primitive ("sum"), c(dots, na.rm = na.rm))
+        }
+    # }
+
+    # if (unlockEnvironment_ (asNamespace("stats"))) {
 
         env <- as.environment("package:stats")
 
@@ -796,7 +817,7 @@
                 0.5 * (x[floor (d)] + x[ceiling(d)])
             }
         }
-    }
+    # }
 
     register_S3_method("labelled", "na_values", "declared")
     register_S3_method("labelled", "na_values<-", "declared")
@@ -828,6 +849,8 @@
 
     register_S3_method("vctrs", "vec_ptype_abbr", "declared")
     register_S3_method("vctrs", "vec_ptype_full", "declared")
+    register_S3_method("vctrs", "vec_proxy", "declared")
+    register_S3_method("vctrs", "vec_restore", "declared")
     # register_S3_method("vctrs", "vec_ptype2", "declared")
 
     register_S3_method("vroom", "output_column", "declared")
