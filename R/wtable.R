@@ -19,7 +19,7 @@
 #'
 #' A general table of frequencies, using the base function `table()`, ignores
 #' the defined missing values (which are all stored as NAs). The
-#' reimplementation of this function in `w_table()` takes care of this detail,
+#' reimplementation of this function in `wtable()` takes care of this detail,
 #' and presents frequencies for each separately defined missing values. Similar
 #' reimplementations for the other functions have the same underlying objective.
 #'
@@ -61,7 +61,7 @@
 #' If no frequency weights are provided, the result is identical to the
 #' corresponding base functions.
 #'
-#' The function `w_quantile()` extensively borrowed ideas from packages
+#' The function `wquantile()` extensively borrowed ideas from packages
 #' **`stats`** and **`Hmisc`**, to ensure a constant interpolation that would
 #' produce the same quantiles if no weights are provided or if all
 #' weights are equal to 1.
@@ -74,8 +74,8 @@
 #' and its default is set to TRUE. The declared missing values are automatically
 #' eliminated from the summary statistics, even if this argument is deactivated.
 #'
-#' The function `w_mode()` returns the weighted mode of a variable. Unlike the
-#' other functions where the prefix `w_` signals a weighted version of the
+#' The function `wmode()` returns the weighted mode of a variable. Unlike the
+#' other functions where the prefix `w` signals a weighted version of the
 #' base function with the same name, this has nothing to do with the base
 #' function `mode()` which refers to the storage mode / type of an R object.
 #'
@@ -84,22 +84,22 @@
 #'
 #' # a pure categorical variable
 #' x <- factor(sample(letters[1:5], 215, replace = TRUE))
-#' w_table(x)
+#' wtable(x)
 #'
 #'
 #' # simulate number of children
 #' x <- sample(0:4, 215, replace = TRUE)
-#' w_table(x)
+#' wtable(x)
 #'
 #' # simulate a Likert type response scale from 1 to 7
 #' values <- sample(c(1:7, -91), 215, replace = TRUE)
 #' x <- declared(values, labels = c("Good" = 1, "Bad" = 7))
-#' w_table(x)
+#' wtable(x)
 #'
 #'
 #' # Defining missing values
 #' missing_values(x) <- -91
-#' w_table(x)
+#' wtable(x)
 #'
 #'
 #' # Defined missing values with labels
@@ -110,10 +110,10 @@
 #'     na_values = -91
 #' )
 #'
-#' w_table(x)
+#' wtable(x)
 #'
 #' # Including the values in the table of frequencies
-#' w_table(x, values = TRUE)
+#' wtable(x, values = TRUE)
 #'
 #'
 #' # An example involving multiple variables
@@ -130,9 +130,9 @@
 #'     Children = sample(0:5, 215, replace = TRUE)
 #' )
 #'
-#' w_table(DF$Gender)
+#' wtable(DF$Gender)
 #'
-#' w_sd(DF$Age)
+#' wsd(DF$Age)
 #'
 #'
 #' # Weighting: observed proportions
@@ -146,11 +146,11 @@
 #'
 #' DF$fweight <- fweights[match(10 * DF$Area + DF$Gender, c(11, 12, 21, 22))]
 #'
-#' with(DF, w_table(Gender, wt = fweight))
+#' with(DF, wtable(Gender, wt = fweight))
 #'
-#' with(DF, w_mean(Age, wt = fweight))
+#' with(DF, wmean(Age, wt = fweight))
 #'
-#' with(DF, w_quantile(Age, wt = fweight))
+#' with(DF, wquantile(Age, wt = fweight))
 #' @author Adrian Dusa
 #'
 #' @param x A numeric vector for summaries, or declared / factor for frequency
@@ -168,14 +168,11 @@
 #'
 #' @param observed Logical, print the observed categories only
 #'
-#' @param margin Numeric, indicating the margin to calculate crosstab
-#' proportions: 0 from the total, 1 from row totals and 2 from column totals
-#'
 #' @param vlabel Logical, print the variable label, if existing
 #' @export
-`w_table` <- function (
-    x, y = NULL, wt = NULL, values = FALSE, valid = TRUE, observed = TRUE,
-    margin = NULL, vlabel = FALSE
+`wtable` <- function (
+    x, y = NULL, wt = NULL, values = TRUE, valid = TRUE, observed = TRUE,
+    vlabel = FALSE
 ) {
 
     funargs <- lapply(
@@ -203,7 +200,7 @@
     if (!crosstab) {
         valid <- isTRUE (valid) && any (is.na (x))
     }
-    
+
     xlabel <- attr (x, "label", exact = TRUE)
     allnax <- all (is.na (x))
 
@@ -226,12 +223,16 @@
             # print (head(paste (as.character (x), undeclare (x), sep = "_-_")))
             x <- factor (
                 paste (
-                    as.character (undeclare (x)),
                     undeclare (x, drop = TRUE),
+                    as.character (undeclare (x)),
                     sep = "_-_"
                 ),
-                levels = paste (names (xvallab), xvallab, sep = "_-_")
+                levels = paste (xvallab, names (xvallab), sep = "_-_")
             )
+        }
+        else {
+            xvalues <- FALSE
+            x <- undeclare (x, drop = TRUE)
         }
     }
     else {
@@ -257,6 +258,7 @@
         allnay <- all (is.na (y))
 
         nmy <- getName_ (funargs$y)
+        dimnms <- c(nmx, nmy)
 
         ncharx <- nchar (nmx)
         nchary <- nchar (nmy)
@@ -280,16 +282,20 @@
                     drop_na = crosstab && isTRUE (valid),
                     observed = observed
                 )
-                yna_values <- attr (yvallab, "missing")            
+                yna_values <- attr (yvallab, "missing")
 
                 y <- factor (
                     paste (
-                        as.character (undeclare (y)),
                         undeclare (y, drop = TRUE),
+                        as.character (undeclare (y)),
                         sep = "_-_"
                     ),
-                    levels = paste (names (yvallab), yvallab, sep = "_-_")
+                    levels = paste (yvallab, names (yvallab), sep = "_-_")
                 )
+            }
+            else {
+                yvalues <- FALSE
+                y <- undeclare (y, drop = TRUE)
             }
         }
         else {
@@ -349,46 +355,32 @@
     }
 
     if (crosstab) {
-        toprint <- tbl
 
-        if (length (margin)) {
-            if (!is.numeric (margin) || !is.element (margin, 0:2)) {
-                stopError_ ("'margin' should be a number between 0, 1 and 2.")
-            }
+        toprint <- orig <- tbl
+        names (dimnames (orig))  <- dimnms
 
-            toprint <- switch(margin + 1,
-                proportions (toprint),
-                proportions (toprint, 1),
-                proportions (toprint, 2)
-            )
-        }
-
-        if (is.null (margin) || margin != 1) {
-            toprint <- rbind (toprint, Total = colSums (toprint))
-        }
-
-        if (is.null (margin) || margin != 2) {
-            toprint <- cbind (toprint, Total = rowSums (toprint))
-        }
-
-        if (length (margin)) {
-            toprint <- round(100 * toprint, 1)
-        }
+        toprint <- rbind (toprint, Total = colSums (toprint))
+        toprint <- cbind (toprint, Total = rowSums (toprint))
 
         if (isTRUE (vlabel)) {
-            attr (toprint, "xlabel") <- paste(nmx, xlabel, sep = ": ")
-            attr (toprint, "ylabel") <- paste(nmy, ylabel, sep = ": ")
+            if (!is.null (xlabel) & !is.null (ylabel)) {
+                attr (toprint, "xlabel") <- paste(nmx, xlabel, sep = ": ")
+                attr (toprint, "ylabel") <- paste(nmy, ylabel, sep = ": ")
+            } else {
+                message("Variable label(s) not available.")
+            }
         }
         attr (toprint, "xvalues") <- isTRUE (values) & xvalues
         attr (toprint, "yvalues") <- isTRUE (values) & yvalues
 
-        # class (toprint) <- c ("w_table", "matrix")
+        # class (toprint) <- c ("wtable", "matrix")
     }
     else {
+        only_na <- length (x) > 0 && isTRUE (allnax)
         labels <- NULL
         if (nrow(tbl) > 0) {
             labels <- rownames (tbl)
-            labels <- unlist (lapply (strsplit (labels, split = "_-_"), "[[", 1))
+            labels <- sapply (strsplit (labels, split = "_-_"), tail, 1)
         }
 
         if (any (is.na (x))) {
@@ -404,7 +396,7 @@
 
         toprint$rel <- proportions (toprint$fre)
         toprint$per <- toprint$rel * 100
-        
+
         if (valid & (length (missing) > 0 | any (is.na (labels)))) {
             vld <- toprint$fre
             nalabels <- is.element (xvallab, xna_values)
@@ -435,19 +427,36 @@
         attr (toprint, "show_values") <- values & xvalues
         attr (toprint, "na_values") <- xna_values
         attr (toprint, "valid") <- valid
+
+        if (only_na) {
+            nacount <- sum (is.na (x))
+            orig <- array (nacount, dim = c (1))
+            dimnames (orig) <- list (NA_character_)
+        }
     }
 
     if (is.matrix(orig)) {
-        rownames (orig) <- names (xvallab)
-        colnames (orig) <- names (yvallab)
+        if (length (xvallab)) {
+            rownames (orig) <- names (xvallab)
+        }
+        if (length (yvallab)) {
+            colnames (orig) <- names (yvallab)
+        }
     }
-    else {
+    else if (length (xvallab)) {
         names (orig) <- names (xvallab)
     }
 
 
 
     attr (orig, "toprint") <- toprint
-    class (orig) <- c ("w_table", class (orig))
+    class (orig) <- c ("wtable", class (orig))
     return (orig)
+}
+
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_table` <- function (...) {
+    wtable(...)
 }

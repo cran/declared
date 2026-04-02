@@ -1,21 +1,20 @@
 #' @rdname weighted
-#' @param method Character, specifying how the result is scaled, see 'Details'
-#' below.
 #' @export
-`w_var` <- function (
-    x, wt = NULL, method = NULL, na.rm = TRUE
+`wfivenum` <- function (
+    x, wt = NULL, na.rm = FALSE
 ) {
+    metacall <- as.list (match.call ())
 
     if (inherits (x, "haven_labelled")) {
         x <- as.declared (x)
     }
 
     if (
-        is.null (x) || !is.atomic (x) || !(
-            is.numeric (x) || is.complex (x) || is.logical (x)
+        is.null (x) || !(
+            is.atomic (x) && is.numeric (x)
         )
     ) {
-        stopError_ ("'x' should be an atomic vector with finite values.")
+        stopError_ ("'x' should be an atomic numerical vector.")
     }
 
     if (inherits (x, "declared")) {
@@ -24,10 +23,14 @@
             x <- x[-na_index]
             wt <- wt[-na_index] # if wt is NULL, the result is still NULL
         }
+        attributes (x) <- NULL
     }
 
-    if (is.null (wt)) {
-        return (var (x, na.rm = na.rm))
+    if (is.null(wt)) {
+        fvn <- fivenum (x, na.rm = na.rm)
+        names (fvn) <- c ("Min", "Q1", "Q2", "Q3", "Max")
+        class (fvn) <- c ("fobject", class (fvn))
+        return (fvn)
     }
 
     if (
@@ -49,7 +52,7 @@
         wt <- wt[ok]
     }
     else if (any (!ok)) {
-        return (NA)
+        stopError_ ("Missing values and NaN's not allowed if `na.rm' is FALSE")
     }
 
     sumwt <- sum (wt)
@@ -58,21 +61,15 @@
         stopError_ ("'wt' must be non-negative and not all zero")
     }
 
-    wmean <- sum (wt * x/sumwt)
+    fvn <- fivenum (x * wt, na.rm = na.rm)
+    names (fvn) <- c ("Min", "Q1", "Q2", "Q3", "Max")
+    class (fvn) <- c ("fobject", class (fvn))
+    return (fvn)
+}
 
-    if (!is.null (method)) {
-        if (!is.element (method, c ("unbiased", "ML"))) {
-            stopError_ ("Method should be either 'unbiased' or 'ML'.")
-        }
-
-        result <- sum ((sqrt (wt / sumwt) * (x - wmean)) ^ 2)
-
-        if (method == "unbiased") {
-            return (result / (1 - sum ((wt/sumwt)^2)))
-        }
-
-        return (result)
-    }
-
-    return (sum (wt * (x - wmean)^2)/(sumwt - 1))
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_fivenum` <- function (...) {
+    wfivenum(...)
 }

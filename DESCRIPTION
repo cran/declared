@@ -1,6 +1,6 @@
 Package: declared
 Title: Functions for Declared Missing Values
-Version: 0.25
+Version: 0.26
 Authors@R: 
     c(
         person(
@@ -8,12 +8,6 @@ Authors@R:
             email = "dusa.adrian@unibuc.ro",
             role = c("aut", "cre", "cph"),
             comment = c(ORCID = "0000-0002-3525-9253")
-        ),
-        person(
-            "Daniel", "Antal",
-            email = "daniel.antal@dataobservatory.eu",
-            role = "ctb",
-            comment = c(ORCID = "0000-0001-7513-6760")
         )
     )
 URL: https://github.com/dusadrian/declared
@@ -32,9 +26,9 @@ License: GPL (>= 3)
 Language: en-US
 Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2024-09-08 18:24:45 UTC; dusadrian
-Author: Adrian Dusa [aut, cre, cph] (<https://orcid.org/0000-0002-3525-9253>),
-  Daniel Antal [ctb] (<https://orcid.org/0000-0001-7513-6760>)
+Packaged: 2026-04-01 16:01:14 UTC; dusadrian
+Author: Adrian Dusa [aut, cre, cph] (ORCID:
+    <https://orcid.org/0000-0002-3525-9253>)
 Maintainer: Adrian Dusa <dusa.adrian@unibuc.ro>
 Repository: CRAN
-Date/Publication: 2024-09-08 20:00:02 UTC
+Date/Publication: 2026-04-02 10:30:02 UTC

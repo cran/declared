@@ -298,6 +298,27 @@
   NextMethod()
 }
 
+
+# DO NOT use backticks for this function name
+# it might break the roxygen2 documentation generating process
+
+#' @method weighted.mean declared
+#' @importFrom stats weighted.mean
+#' @export
+weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
+  xdate <- isTRUE (attr (x, "date"))
+  na_index <- attr (x, "na_index")
+  if (!is.null (na_index)) {
+    x <- x[-na_index]
+  }
+  x <- unclass (x)
+  if (xdate) {
+    attributes (x) <- NULL
+    x <- as.Date (x)
+  }
+  NextMethod()
+}
+
 #' @export
 `median.declared` <- function (x, na.rm = FALSE, ...) {
   xdate <- isTRUE (attr (x, "date"))
@@ -323,6 +344,7 @@
   NextMethod()
 }
 
+#' @method all.equal declared
 #' @export
 `all.equal.declared` <- function (target, current, ...) {
   na_index <- attr (target, "na_index")

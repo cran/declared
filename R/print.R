@@ -23,7 +23,7 @@
             "\n"
         )
     )
-    
+
     if (length (x) > 0) {
         print (noquote (format_declared (x)), ...)
 
@@ -101,7 +101,7 @@
 
 
 #' @export
-`print.w_table` <- function (x, force = FALSE, startend = TRUE, ...) {
+`print.wtable` <- function (x, force = FALSE, startend = TRUE, ...) {
     toprint <- attr (x, "toprint")
     xlabel <- attr (toprint, "xlabel")
     ylabel <- attr (toprint, "ylabel")
@@ -111,9 +111,9 @@
     tick <- c ("\u00b4", "\u0060", "\u2018", "\u2019") # ticks and single quotes
     tick <- c (paste0 (achar, "'"), paste0 (achar, tick), tick)
 
-    if (!all(is.na(x)) && x[1] != as.matrix(toprint)[1]) {
+    if (!all (is.na (x)) && x[1] != as.matrix (toprint)[1]) {
         # this means the original table was altered. e.g. proportions (tbl)
-        class (x) <- setdiff (class (x), c ("w_table", "array"))
+        class (x) <- setdiff (class (x), c ("wtable", "array"))
         names (dimnames (x)) <- NULL
         attr (x, "toprint") <- NULL
         rownames (x) <- gsub (paste (tick, collapse = "|"), "'", rownames (x))
@@ -139,20 +139,25 @@
 
             rnms <- strsplit (rownames (x), split = "_-_")
 
-            xlabels <- unlist (lapply (rnms, "[[", 1))
-            max.nchar.xlabels <- max (nchar (encodeString (xlabels)))
-            for (i in seq (length (xlabels))) {
-                if (nchar (xlabels[i]) < max.nchar.xlabels) {
-                    xlabels[i] <- padLeft_ (
-                        xlabels[i], max.nchar.xlabels - nchar (xlabels[i])
-                    )
-                }
-            }
+            xlabels <- sapply (rnms, tail, 1)
+            # max.nchar.xlabels <- max (nchar (encodeString (xlabels)))
+            # for (i in seq (length (xlabels))) {
+            #     if (nchar (xlabels[i]) < max.nchar.xlabels) {
+            #         xlabels[i] <- padLeft_ (
+            #             xlabels[i], max.nchar.xlabels - nchar (xlabels[i])
+            #         )
+            #     }
+            # }
 
             if (attr (x, "xvalues")) {
                 # -length (rnms), because of "Total" which does not have a value
-                xvalues <- unlist (lapply (rnms[-length (rnms)], "[[", 2))
-                xvalues <- c (xvalues, "")
+                xvalues <- unlist (lapply (rnms[-length (rnms)], "[[", 1))
+
+                # suppress duplicate labels (when label equals value)
+                if (length (xlabels) > 0) {
+                    idx <- seq_along (xvalues)
+                    xlabels[idx] <- ifelse (xlabels[idx] == xvalues, "", xlabels[idx])
+                }
 
                 max.nchar.xvalues <- max (nchar (encodeString (xvalues)))
 
@@ -164,7 +169,8 @@
                     }
                 }
 
-                rnms <- paste (xlabels, xvalues)
+                xvalues <- c (xvalues, paste(rep(" ", max.nchar.xvalues), collapse = ""))
+                rnms <- paste (xvalues, xlabels)
             }
             else {
                 rnms <- xlabels
@@ -174,13 +180,26 @@
 
             cnms <- colnames (x)
             if (attr (x, "yvalues")) {
-                cnms <- gsub ("_-_", " ", cnms)
-            } else {
-                cnms <- unlist (lapply (
+                cnms <- vapply (
                     strsplit (cnms, split = "_-_"),
-                    "[[",
+                    function(v) {
+                        if ( length(v) < 2) return(v)
+                        val <- v[1]
+                        lab <- v[length (v)]
+                        if (identical (val, lab)) {
+                            val
+                        } else {
+                            paste (val, lab)
+                        }
+                    },
+                    character(1L)
+                )
+            } else {
+                cnms <- sapply (
+                    strsplit (cnms, split = "_-_"),
+                    tail,
                     1
-                ))
+                )
             }
 
             max.nchar.cols <- max (nchar (c (encodeString (cnms), x)))
@@ -240,24 +259,37 @@
             }
 
             rnms <- labels
+            max.nchar.values <- ifelse (length (values) > 0, max (nchar (values)), 0)
 
             if (show_values) {
+                labels[!is.na (labels)][values == labels[!is.na (labels)]] <- ""
                 values <- formatC (
                     as.character (values),
-                    digits = max (nchar (values)) - 1,
+                    digits = max.nchar.values - 1,
                     flag = " "
                 )
-                labels[!is.na (labels)][values == labels[!is.na (labels)]] <- ""
-                rnms[!is.na (labels)] <- paste (labels[!is.na (labels)], values)
+                rnms[!is.na (labels)] <- paste (values, labels[!is.na (labels)])
             }
 
-            rnms[is.na (labels)] <- "NA"
+
+            if (max.nchar.values > 1) {
+                rnms[is.na (labels)] <- padLeft_ ("NA", max.nchar.values - 2)
+            } else {
+                if (max.nchar.values == 1) {
+                    rnms[!is.na (labels)] <- sapply (
+                        rnms[!is.na(labels)],
+                        padLeft_,
+                        max.nchar.values - 1
+                    )
+                }
+                rnms[is.na (labels)] <- "NA"
+            }
 
             max.nchar.cases <- max (nchar (encodeString (rnms)))
             # rnms <- sprintf (paste0 ("% ", max.nchar.cases, "s"), rnms)
             for (i in seq (length (rnms))) {
                 if (nchar (rnms[i]) < max.nchar.cases) {
-                    rnms[i] <- padLeft_ (
+                    rnms[i] <- padRight_ (
                         rnms[i], max.nchar.cases - nchar (rnms[i])
                     )
                     # rnms[i] <- paste (
@@ -279,7 +311,7 @@
                 ),
                 ""
             )
-            
+
             x$rel <- formatC (x$rel, digits = 3, format = "f")
             rel <- sprintf ("% 5s", x$rel)
             x$per <- formatC (x$per, digits = 1, format = "f")
@@ -293,10 +325,10 @@
 
             miseparator <- paste (
                 c (
-                    rep (
-                        " ",
-                        ifelse (max.nchar.cases > 5, max.nchar.cases - 5, 0)
-                    ),
+                    # rep (
+                    #     " ",
+                    #     ifelse (max.nchar.cases > 5, max.nchar.cases - 5, 0)
+                    # ),
                     rep (
                         "-",
                         min (max.nchar.cases, 5) + 1 * (sums[1] >= 1000)

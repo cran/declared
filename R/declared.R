@@ -1,7 +1,9 @@
 #' @title Labelled vectors with declared missing values
+#'
 #' @description
 #' The labelled vectors are mainly used to analyse social science data,
 #' and the missing values declaration is an important step in the analysis.
+#'
 #' @details
 #' The `declared` objects are very similar to the `haven_labelled_spss` objects
 #' from package \bold{haven}. It has exactly the same arguments, but it features
@@ -43,14 +45,16 @@
 #' quantitative variables, while some declared objects are certainly categorical
 #' despite using numbers to denote categories.
 #'
-#' It distinguishes between `"categorial"` and `"quantitative"` types of
+#' It distinguishes between `"categorical"` and `"quantitative"` types of
 #' variables, and additionally recognizes `"nominal"` and `"ordinal"` as
 #' categorical, and similarly recognizes `"interval"`, `"ratio"`,
 #' `"discrete"` and `"continuous"` as quantitative.
+#'
 #' @return `declared()` and `as.declared()` return labelled vector of class
 #' "declared". When applied to a data frame, `as.declared()` will return a
 #' corresponding data frame with declared variables. `is.declared()` and
-#' `anyNAdeclared` return a logical value.
+#' `anyNAdeclared()` return a logical value.
+#'
 #' @examples
 #'
 #' x <- declared(
@@ -83,6 +87,10 @@
 #'
 #' # Returning values instead of categories
 #' as.character(x, values = TRUE)
+#'
+#' anyNAdeclared(x) # contains declared missing values
+#'
+#' anyNAdeclared(c(1:5, NA)) # no declared missing values
 #' @param x A numeric vector to label, or a declared labelled vector
 #' (for `undeclare`)
 #' @param labels A named vector or `NULL`. The vector should be the same type
@@ -116,7 +124,7 @@ declared.default <- function (
     x, labels = NULL, na_values = NULL, na_range = NULL, label = NULL,
     measurement = NULL, llevels = FALSE, ...
 ) {
-  
+
   xdate <- inherits(x, "Date")
   if (is.factor (x)) {
     nms <- levels (x)
@@ -154,7 +162,7 @@ declared.default <- function (
     if (xdate && !possibleNumeric_ (labels)) {
       stopError_ ("For date objects, the labels should be numeric.")
     }
-    
+
     if (
       possibleNumeric_ (labels) && (
         xdate | possibleNumeric_ (x) | all (is.na (x))
@@ -190,7 +198,7 @@ declared.default <- function (
     if (xdate && !possibleNumeric_ (na_values)) {
       stopError_ ("For date objects, the declared NA values should be numeric.")
     }
-    
+
     if (possibleNumeric_ (na_values) & !xchar) {
       na_values <- asNumeric_ (na_values)
     }
@@ -214,13 +222,13 @@ declared.default <- function (
 
   # attr (x, "xdate") <- xdate
   na_index <- which(is.element(x, misvals))
-  
+
   if (length(na_index) > 0) {
     declared_nas <- x[na_index]
     if (xdate) {
       declared_nas <- as.numeric (declared_nas)
     }
-    
+
     x[na_index] <- NA
     names(na_index) <- declared_nas
   }
@@ -245,4 +253,69 @@ declared.default <- function (
   attr (x, "measurement") <- check_measurement (measurement)
   class(x) <- unique (c ("declared", class (x)))
   return (x)
+}
+
+
+#' @rdname declared_internal
+#' @keywords internal
+#
+# @description
+# `direct_declared()` is a low-level constructor for callers that already know
+# the final storage mode and metadata of the vector. It does not validate,
+# coerce, scan for missing codes, or replace values with `NA`.
+#
+# Callers are expected to pass a vector already stored in its final form, with
+# declared missing values already represented as `NA`, and with `na_index`
+# containing the original declared missing codes as names.
+#
+# @param x An atomic vector already in its final storage mode.
+# @param na_index An optional named numeric vector indicating which `NA`
+# positions correspond to declared missing values. The names should contain the
+# original missing codes.
+# @param na_values A vector of declared missing values metadata.
+# @param na_range A vector of length two describing the declared missing range.
+# @param labels A named vector of value labels.
+# @param label A short, human-readable description of the vector.
+# @param measurement Optional, user specified measurement level.
+# @param date Logical, whether `x` should be treated as a date vector.
+# @return A vector of class `"declared"`.
+#' @export
+direct_declared <- function (
+    x, na_index = NULL, na_values = NULL, na_range = NULL, labels = NULL,
+    label = NULL, measurement = NULL, date = inherits(x, "Date")
+) {
+  if (!is.atomic(x)) {
+    stopError_("`x` must be an atomic vector.")
+  }
+
+  if (!is.null(na_index) && !is.numeric(na_index)) {
+    stopError_("`na_index` must be a numeric vector of indices.")
+  }
+
+  if (!is.null(na_index) && is.null(names(na_index))) {
+    stopError_("`na_index` must have names.")
+  }
+
+  if (!is.null(label) && !(
+    is.atomic(label) && is.character(label) && length(label) == 1
+  )) {
+    stopError_("`label` must be a character vector of length one.")
+  }
+
+  if (!is.logical(date) || length(date) != 1) {
+    stopError_("`date` must be a logical vector of length one.")
+  }
+
+  .Call(
+    "_directDeclared",
+    x,
+    na_index,
+    na_values,
+    na_range,
+    labels,
+    label,
+    check_measurement(measurement),
+    date,
+    unique(c("declared", class(x)))
+  )
 }

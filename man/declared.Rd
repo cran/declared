@@ -51,7 +51,7 @@ labels}
 \code{declared()} and \code{as.declared()} return labelled vector of class
 "declared". When applied to a data frame, \code{as.declared()} will return a
 corresponding data frame with declared variables. \code{is.declared()} and
-\code{anyNAdeclared} return a logical value.
+\code{anyNAdeclared()} return a logical value.
 }
 \description{
 The labelled vectors are mainly used to analyse social science data,
@@ -98,7 +98,7 @@ suitable for a certain statistical analysis, for instance regression requires
 quantitative variables, while some declared objects are certainly categorical
 despite using numbers to denote categories.
 
-It distinguishes between \code{"categorial"} and \code{"quantitative"} types of
+It distinguishes between \code{"categorical"} and \code{"quantitative"} types of
 variables, and additionally recognizes \code{"nominal"} and \code{"ordinal"} as
 categorical, and similarly recognizes \code{"interval"}, \code{"ratio"},
 \code{"discrete"} and \code{"continuous"} as quantitative.
@@ -135,4 +135,8 @@ as.character(x)
 
 # Returning values instead of categories
 as.character(x, values = TRUE)
+
+anyNAdeclared(x) # contains declared missing values
+
+anyNAdeclared(c(1:5, NA)) # no declared missing values
 }

@@ -7,7 +7,7 @@
 #' @param na.rm Logical, should the empty missing values be removed?
 #'
 #' @export
-`w_mean` <- function (
+`wmean` <- function (
     x, wt = NULL, trim = 0, na.rm = TRUE
 ) {
 
@@ -72,7 +72,7 @@
         }
 
         if (trim >= 0.5) {
-            return (w_median (x, wt = wt))
+            return (wmedian (x, wt = wt))
         }
 
         lo <- floor (n * trim) + 1
@@ -88,4 +88,11 @@
     }
 
     return (sum (wt * x)/sumwt)
+}
+
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_mean` <- function (...) {
+    wmean(...)
 }

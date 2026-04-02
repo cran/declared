@@ -1,6 +1,6 @@
 #' @rdname weighted
 #' @export
-`w_mode` <- function (x, wt = NULL) {
+`wmode` <- function (x, wt = NULL) {
 
     if (inherits (x, "haven_labelled")) {
         x <- as.declared (x)
@@ -32,7 +32,7 @@
         stopError_ ("'wt' should be an atomic vector with finite values.")
     }
 
-    tbl <- w_table (x, wt = wt)
+    tbl <- wtable (x, wt = wt)
     wm <- which.max (tbl)
 
     fmode <- names (tbl[wm])
@@ -45,4 +45,11 @@
     }
 
     return (fmode)
+}
+
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_mode` <- function (...) {
+    wmode(...)
 }

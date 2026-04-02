@@ -1,10 +1,10 @@
 #' @rdname weighted
 #' @export
-`w_IQR` <- function (
+`wIQR` <- function (
     x, wt = NULL, na.rm = FALSE, ...
 ) {
     unname(unclass(diff (
-        w_quantile(
+        wquantile(
             x,
             wt = wt,
             probs = c(0.25, 0.75),
@@ -13,4 +13,11 @@
             ... = ...
         )
     )))
+}
+
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_IQR` <- function (...) {
+    wIQR(...)
 }

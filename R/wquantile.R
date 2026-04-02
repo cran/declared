@@ -1,7 +1,7 @@
 #' @rdname weighted
 #' @param probs Numeric vector of probabilities with values in \[0,1\]
 #' @export
-`w_quantile` <- function (
+`wquantile` <- function (
     x, wt = NULL, probs = seq (0, 1, 0.25), na.rm = TRUE, ...
 ) {
 
@@ -86,4 +86,11 @@
 
     class (qs) <- c ("fobject", class (qs))
     return (qs)
+}
+
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_quantile` <- function (...) {
+    wquantile(...)
 }

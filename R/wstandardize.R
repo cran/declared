@@ -1,6 +1,6 @@
 #' @rdname weighted
 #' @export
-`w_standardize` <- function (x, wt = NULL, na.rm = TRUE) {
+`wstandardize` <- function (x, wt = NULL, na.rm = TRUE) {
 
     if (inherits (x, "haven_labelled")) {
         x <- as.declared (x)
@@ -37,7 +37,14 @@
     }
 
     return (
-        (x - w_mean (x, wt = wt, na.rm = na.rm)) /
-        w_sd (x, wt = wt, na.rm = na.rm)
+        (x - wmean (x, wt = wt, na.rm = na.rm)) /
+        wsd (x, wt = wt, na.rm = na.rm)
     )
+}
+
+#' @rdname declared_internal
+#' @keywords internal
+#' @export
+`w_standardize` <- function (...) {
+    wstandardize(...)
 }
