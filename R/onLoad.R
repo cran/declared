@@ -1,3 +1,29 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 `.onLoad` <- function (...) {
     loc <- dirname(getNamespaceInfo("stats", "path"))
     suppressPackageStartupMessages(
@@ -28,131 +54,6 @@
     # if (unlockEnvironment_ (asNamespace("base"))) {
 
         env <- as.environment("package:base")
-        do.call ("unlockBinding", list (sym = "print.data.frame", env = env))
-
-        # this function is unchanged, but it needs to be re-written to access
-        # the custom version of format.data.frame()
-        env$`print.data.frame` <- function (
-            x, ..., digits = NULL, quote = FALSE,
-            right = TRUE, row.names = TRUE, max = NULL
-        ) {
-            n <- length (row.names (x))
-            if (length (x) == 0L) {
-                do.call ("cat", list (
-                    sprintf (ngettext(n, "data frame with 0 columns and %d row",
-                    "data frame with 0 columns and %d rows"), n),
-                    "\n",
-                    sep = "")
-                )
-            }
-            else if (n == 0L) {
-                print.default(names (x), quote = FALSE)
-                do.call ("cat", list (
-                    gettext("<0 rows> (or 0-length row.names)\n")
-                    )
-                )
-            }
-            else {
-                if (is.null (max))
-                    max <- getOption ("max.print", 99999L)
-                if (!is.finite (max))
-                    stop ("invalid 'max' / getOption (\"max.print\"): ",
-                        max)
-                omit <- (n0 <- max%/%length (x)) < n
-                m <- as.matrix(format.data.frame(if (omit)
-                    x[seq_len(n0), , drop = FALSE]
-                else x, digits = digits, na.encode = FALSE))
-                if (!isTRUE (row.names))
-                    dimnames (m)[[1L]] <- if (isFALSE (row.names))
-                        rep.int("", if (omit)
-                        n0
-                        else n)
-                    else row.names
-                do.call (
-                    "print",
-                    list (m, ..., quote = quote, right = right, max = max)
-                )
-                if (omit)
-                    do.call (
-                        "cat",
-                        list (
-                            " [ reached 'max' /",
-                            "getOption (\"max.print\") -- omitted",
-                            n - n0,
-                            "rows ]\n"
-                        )
-                    )
-            }
-            invisible(x)
-        }
-
-        do.call ("unlockBinding", list (sym = "format.data.frame", env = env))
-
-        env$`format.data.frame` <- function (x, ..., justify = "none")
-        {
-            nc <- length (x)
-            if (!nc)
-                return (x)
-            nr <- .row_names_info(x, 2L)
-            rval <- vector("list", nc)
-
-            # -----------------------------------------------------
-            # this function is also unchanged, except for this part:
-            for (i in seq_len(nc)) {
-                if (is.declared (x[[i]]) && any (is.na (x[[i]]))) {
-                    # any (is.na ()) is necessary to guard against na.omit (),
-                    # for instance:
-                    rval[[i]] <- format_declared (x[[i]])
-                }
-                else {
-                    rval[[i]] <- format (x[[i]], ..., justify = justify)
-                }
-            }
-            # -----------------------------------------------------
-
-            lens <- vapply (rval, NROW, 1)
-
-            if (any (lens != nr)) {
-                warning (
-                    paste (
-                        "corrupt data frame: columns will be",
-                        "truncated or padded with NAs"
-                    )
-                )
-                for (i in seq_len(nc)) {
-                    len <- nrow (rval[[i]])
-                    if (len == nr)
-                        next
-                    if (length (dim(rval[[i]])) == 2L) {
-                        rval[[i]] <- if (len < nr)
-                        rbind(rval[[i]], matrix(NA, nr - len, ncol(rval[[i]])))
-                        else rval[[i]][seq_len(nr), ]
-                    }
-                    else {
-                        rval[[i]] <- if (len < nr)
-                        c (rval[[i]], rep.int(NA, nr - len))
-                        else rval[[i]][seq_len(nr)]
-                    }
-                }
-            }
-
-            for (i in seq_len(nc)) {
-                if (
-                    is.character (rval[[i]]) &&
-                    inherits (rval[[i]], "character")
-                )
-                    oldClass (rval[[i]]) <- "AsIs"
-            }
-
-            y <- as.data.frame.list (
-                    rval, row.names = seq_len(nr), col.names = names (x),
-                    optional = TRUE, fix.empty.names = FALSE, cut.names = TRUE
-                )
-
-            attr (y, "row.names") <- row.names (x)
-
-            return (y)
-        }
 
         do.call ("unlockBinding", list (sym = "rbind.data.frame", env = env))
 
@@ -239,6 +140,13 @@
                 if (is.matrix(xi)) allargs[[i]] <- xi <-
                     as.data.frame(xi, stringsAsFactors = stringsAsFactors)
                 if (inherits (xi, "data.frame")) {
+                    declared_columns <- vapply (xi, is.declared, TRUE)
+                    if (any (declared_columns)) {
+                        xi[declared_columns] <- lapply (
+                            xi[declared_columns], sanitize_na_index_
+                        )
+                        allargs[[i]] <- xi
+                    }
                     if (is.null (cl))
                     cl <- oldClass (xi)
                     ri <- attr (xi, "row.names")
@@ -270,7 +178,8 @@
                             list (
                                 labels = attr (x, "labels", exact = TRUE),
                                 na_values = attr (x, "na_values"),
-                                na_range = attr (x, "na_range")
+                                na_range = attr (x, "na_range"),
+                                decimals = attr (x, "decimals", exact = TRUE)
                             )
                         })
                         ## code for declared
@@ -338,6 +247,14 @@
 
                             if (!is.null (na_range)) {
                                 lxi[[jj]]$na_range <- range(na_range)
+                            }
+
+                            decimals <- unique (unlist (c (
+                                lxi[[jj]]$decimals,
+                                attr (xij, "decimals", exact = TRUE)
+                            )))
+                            if (length (decimals) > 0) {
+                                lxi[[jj]]$decimals <- max (decimals)
                             }
                         }
                         ## code for declared
@@ -481,7 +398,8 @@
                         label = attr (value[[i]], "label", exact = TRUE),
                         labels = lxi[[i]]$labels,
                         na_values = lxi[[i]]$na_values,
-                        na_range = lxi[[i]]$na_range
+                        na_range = lxi[[i]]$na_range,
+                        decimals = lxi[[i]]$decimals
                     )
                 }
             }
@@ -523,6 +441,28 @@
             }
 
             method <- match.arg (method)
+
+            has_declared <- any (vapply (z, is.declared, logical (1L)))
+            if (has_declared && length (z) > 1L) {
+                z <- lapply (z, function (x) {
+                    if (is.declared (x)) {
+                        return (xtfrm_declared (
+                            x,
+                            decreasing = decreasing,
+                            na.last = na.last,
+                            empty.last = empty.last
+                        ))
+                    }
+                    else if (is.object (x)) {
+                        return (as.vector (xtfrm (x)))
+                    }
+                    else {
+                        return (x)
+                    }
+                })
+                return (do.call ("order", c (z, list (na.last = na.last,
+                    decreasing = decreasing, method = method))))
+            }
 
             if (any (vapply (z, function (x) {
                     is.object(x) && !is.declared (x)
@@ -606,6 +546,7 @@
             ...
         ) {
             if (is.declared (x)) {
+                x <- sanitize_na_index_ (x)
                 levels <- match.arg (levels)
                 labels <- attr (x, "labels", exact = TRUE)
                 nv <- names_values (x, drop_na = drop_na)
@@ -661,7 +602,6 @@
                 else factor (x)
             }
         }
-
         do.call ("unlockBinding", list (sym = "drop", env = env))
 
         env$drop <- function (x) {
@@ -706,27 +646,6 @@
                 0L
             ) > 0L
         }
-
-        do.call ("unlockBinding", list (sym = "sum", env = env))
-
-        env$sum <- function (..., na.rm = FALSE) {
-            dots <- lapply (list (...), function(x) {
-                if (inherits (x, "declared")) {
-                    na_index <- attr (x, "na_index")
-                    if (!is.null (na_index)) {
-                        x <- x[-na_index]
-                    }
-                    xdate <- isTRUE (attr (x, "date"))
-                    attributes (x) <- NULL
-                    if (xdate) {
-                        x <- as.Date (x)
-                    }
-                }
-                return (x)
-            })
-
-            do.call(.Primitive ("sum"), c(dots, na.rm = na.rm))
-        }
     # }
 
     # if (unlockEnvironment_ (asNamespace("stats"))) {
@@ -737,6 +656,7 @@
 
         env$sd <- function (x, na.rm = FALSE) {
             if (is.declared (x)) {
+                x <- sanitize_na_index_ (x)
                 na_index <- attr (x, "na_index")
                 if (!is.null (na_index)) {
                     x <- x[-na_index]
@@ -756,6 +676,7 @@
 
         env$var <- function (x, y = NULL, na.rm = FALSE, use) {
             if (is.declared (x)) {
+                x <- sanitize_na_index_ (x)
                 na_index <- attr (x, "na_index")
                 if (!is.null (na_index)) {
                     x <- x[-na_index]
@@ -807,6 +728,7 @@
 
         env$fivenum <- function (x, na.rm = FALSE) {
             if (is.declared (x)) {
+                x <- sanitize_na_index_ (x)
                 na_index <- attr (x, "na_index")
                 if (!is.null (na_index)) {
                     x <- x[-na_index]

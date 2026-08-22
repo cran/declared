@@ -1,3 +1,29 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #' @title declared internal functions
 #' @description Functions to be used internally, only by developers and
 #' contributors.
@@ -12,9 +38,13 @@ NULL
         stopError_ ("`x` has to be a vector.")
     }
 
+    x <- sanitize_na_index_ (x)
+
     if (inherits (x, "Date") || isTRUE (attr (x, "date"))) {
         class (x) <- "Date"
         out <- as.character (x)
+    } else if (is.numeric (x) && !is.null (attr (x, "decimals"))) {
+        out <- format_decimals_ (unclass (x), attr (x, "decimals"))
     } else {
         out <- format (unclass (x), digits = digits)
     }
@@ -29,6 +59,16 @@ NULL
     return (format (out, justify = "right"))
 }
 
+`format_decimals_` <- function (x, decimals) {
+    decimals <- check_decimals (decimals)
+    out <- formatC (x, digits = decimals, format = "f")
+    if (decimals > 0) {
+        out <- sub ("\\.?0+$", "", out)
+    }
+    out[out == "-0"] <- "0"
+    return (out)
+}
+
 #' @rdname declared_internal
 #' @keywords internal
 #' @export
@@ -39,6 +79,8 @@ NULL
     if (!is.declared (x)) {
         stopError_ ("`x` has to be a vector of class `declared`.")
     }
+
+    x <- sanitize_na_index_ (x)
 
     if (!identical (empty.last, NA)) {
         if (!(isTRUE (empty.last) | isFALSE (empty.last))) {
@@ -235,8 +277,30 @@ NULL
     }
 }
 
+`check_decimals` <- function (x) {
+    if (is.null (x)) {
+        return (x)
+    }
+
+    if (
+        !is.numeric (x) ||
+        length (x) != 1 ||
+        is.na (x) ||
+        x < 0 ||
+        x != floor (x)
+    ) {
+        stopError_ ("`decimals` should be a single non-negative integer.")
+    }
+
+    return (as.integer (x))
+}
+
 
 `likely_measurement` <- function (x) {
+
+    if (inherits (x, "declared")) {
+        x <- sanitize_na_index_ (x)
+    }
 
     labels <- attr (x, "labels", exact = TRUE)
     na_values <- attr (x, "na_values", exact = TRUE)
@@ -289,6 +353,10 @@ NULL
 `all_missing_values` <- function (
     x, na_values = NULL, na_range = NULL, labels = NULL
 ) {
+
+    if (inherits (x, "declared")) {
+        x <- sanitize_na_index_ (x)
+    }
 
     ##########
     # Arguments na_values, na_range and labels can either be provided
@@ -352,6 +420,10 @@ NULL
         stopError_ (
             "The input should be a declared / haven_labelled_spss vector."
         )
+    }
+
+    if (inherits (x, "declared")) {
+        x <- sanitize_na_index_ (x)
     }
 
     attrx <- attributes (x)
@@ -514,25 +586,27 @@ NULL
 `possibleNumeric_` <- function (x, each = FALSE) {
 
     result <- rep (NA, length (x))
-    isna <- is.na (x)
+    nax <- is.na (x)
 
-    if (all (isna)) {
+    if (all (nax)) {
         if (each) {
             return (result)
         }
+
         return (FALSE)
     }
 
-    if (is.logical (x)) {
+    if (is.logical(x)) {
         if (each) {
             result <- logical (length (x))
-            result[isna] <- NA
+            result[nax] <- NA
             return (result)
         }
+
         return (FALSE)
     }
 
-    if (inherits (x, "haven_labelled") || inherits (x, "declared")) {
+    if (inherits (x, "haven_labelled") || inherits(x, "declared")) {
         num <- Recall (unclass (x), each = each)
 
         labels <- attr (x, "labels", exact = TRUE)
@@ -545,9 +619,10 @@ NULL
 
     if (is.numeric (x)) {
         if (each) {
-            result[!isna] <- TRUE
+            result[!nax] <- TRUE
             return (result)
         }
+
         return (TRUE)
     }
 
@@ -555,28 +630,48 @@ NULL
         x <- as.character (x)
     }
 
-    if (!all (is.na (x))) {
-        x <- gsub ("\u00a0", " ", x) # multibyte space
-    }
-
+    x <- gsub (
+        "\u00a0", # multibyte space
+        " ",
+        gsub (
+            "\u009d", # weird zero length character
+            "",
+            x
+        )
+    )
     multibyte <- grepl ("[^!-~ ]", x)
+
     if (any (multibyte)) {
-        isna[multibyte] <- TRUE
         result[multibyte] <- FALSE
-        x[multibyte] <- NA
     }
 
-    if (each) {
-        x <- suppressWarnings (as.numeric (na.omit (x)))
-        result[!isna] <- !is.na (x)
+    if (sum (nax) < length (x)) {
+        eachx <- suppressWarnings (as.numeric (x[!nax & !multibyte]))
+        result[!nax & !multibyte] <- !is.na(eachx)
+    }
+
+    if (each | length(x) == 1) {
         return (result)
     }
 
-    return (!any (is.na (suppressWarnings (as.numeric (na.omit (x))))))
+    return (all (result[!nax]))
 }
 
 
 `asNumeric_` <- function (x, levels = TRUE) {
+    if (inherits (x, "declared")) {
+        x <- sanitize_na_index_ (x)
+        na_index <- attr (x, "na_index")
+        attributes (x) <- NULL
+
+        if (!is.null (na_index)) {
+            # Non-numeric missing codes naturally become NA after coercion.
+            x[na_index] <- suppressWarnings (as.numeric (names (na_index)))
+        }
+
+        return (Recall (x, levels = levels))
+    }
+
     if (is.numeric (x)) {
         return (x)
     }
@@ -620,7 +715,9 @@ NULL
     result[isna] <- NA
 
     if (all (isna) || is.logical (x)) {
-        # each is certainly TRUE
+        # each is certainly TRUE because if they are all missing or all logical
+        # it would not be numeric, which means the only condition continuing the
+        # function on line 636 is each = TRUE otherwise line 637 would stop
         return (result)
     }
 
@@ -632,7 +729,7 @@ NULL
     isna <- isna | isnax
     x <- x[!isna]
 
-    result[!isna] <- floor (x) == x
+    result[!isna] <- abs (x - round (x)) < .Machine$double.eps^0.5
 
     if (each) {
         return (result)
@@ -974,3 +1071,98 @@ check_date <- function (x) {
     return (x)
 }
 
+
+`xtfrm_declared` <- function (x, decreasing = FALSE, na.last = TRUE, empty.last = na.last) {
+    x <- sanitize_na_index_ (x)
+    na_index <- attr (x, "na_index")
+    na_declared <- logical (length (x))
+    na_declared[na_index] <- TRUE
+    na_empty <- is.empty (x)
+    valid <- !is.na (x)
+
+    z <- numeric (length (x))
+
+    if (is.na (na.last)) {
+        z[na_declared | na_empty] <- NA
+        if (any (valid)) {
+            val <- undeclare (x, drop = TRUE)
+            r_v <- xtfrm (val)
+            r_v <- r_v - min (r_v[valid]) + 1
+            z[valid] <- r_v[valid]
+        }
+        return (z)
+    }
+
+    if (any (valid)) {
+        val <- undeclare (x, drop = TRUE)
+        r_v <- xtfrm (val)
+        r_v <- r_v - min (r_v[valid]) + 1
+        z[valid] <- r_v[valid]
+    }
+
+    if (any (na_declared)) {
+        nms <- names (na_index)
+        if (possibleNumeric_ (nms)) {
+            nms <- asNumeric_ (nms)
+        }
+        r_m_vals <- xtfrm (nms)
+        r_m_vals <- r_m_vals - min (r_m_vals) + 1
+        z[na_index] <- r_m_vals
+    }
+
+    if (any (na_empty)) {
+        z[na_empty] <- 1
+    }
+
+    if (isTRUE (na.last)) {
+        if (isTRUE (empty.last)) {
+            g_v <- 1
+            g_m <- 2
+            g_e <- 3
+        }
+        else {
+            g_v <- 1
+            g_e <- 2
+            g_m <- 3
+        }
+    }
+    else {
+        if (isTRUE (empty.last)) {
+            g_m <- 1
+            g_e <- 2
+            g_v <- 3
+        }
+        else {
+            g_e <- 1
+            g_m <- 2
+            g_v <- 3
+        }
+    }
+
+    shift <- 10 + length (x)
+
+    if (isFALSE (decreasing)) {
+        if (any (valid)) {
+            z[valid] <- z[valid] + (g_v - 1) * shift
+        }
+        if (any (na_declared)) {
+            z[na_declared] <- z[na_declared] + (g_m - 1) * shift
+        }
+        if (any (na_empty)) {
+            z[na_empty] <- z[na_empty] + (g_e - 1) * shift
+        }
+    }
+    else {
+        if (any (valid)) {
+            z[valid] <- z[valid] + (3 - g_v) * shift
+        }
+        if (any (na_declared)) {
+            z[na_declared] <- z[na_declared] + (3 - g_m) * shift
+        }
+        if (any (na_empty)) {
+            z[na_empty] <- z[na_empty] + (3 - g_e) * shift
+        }
+    }
+
+    return (z)
+}

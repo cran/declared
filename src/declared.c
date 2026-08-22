@@ -1,3 +1,31 @@
+/*
+Copyright (c) 2022 - 2026, Adrian Dusa
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, in whole or in part, are permitted provided that the
+following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * The names of its contributors may NOT be used to endorse or promote
+      products derived from this software without specific prior written
+      permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
@@ -28,10 +56,14 @@ typedef union {
 } ieee_double;
 
 SEXP _directDeclared(SEXP x, SEXP na_index, SEXP na_values, SEXP na_range,
-                     SEXP labels, SEXP label, SEXP measurement, SEXP date,
-                     SEXP class_) {
+                     SEXP labels, SEXP label, SEXP measurement, SEXP decimals,
+                     SEXP date, SEXP class_) {
+    int nprotect = 1;
+    x = PROTECT(x);
+
     if (MAYBE_SHARED(x)) {
-        x = Rf_duplicate(x);
+        x = PROTECT(Rf_duplicate(x));
+        nprotect++;
     }
 
     Rf_setAttrib(x, Rf_install("na_index"), na_index);
@@ -40,10 +72,75 @@ SEXP _directDeclared(SEXP x, SEXP na_index, SEXP na_values, SEXP na_range,
     Rf_setAttrib(x, Rf_install("labels"), labels);
     Rf_setAttrib(x, Rf_install("label"), label);
     Rf_setAttrib(x, Rf_install("measurement"), measurement);
+    Rf_setAttrib(x, Rf_install("decimals"), decimals);
     Rf_setAttrib(x, Rf_install("date"), date);
     Rf_classgets(x, class_);
 
+    UNPROTECT(nprotect);
     return x;
+}
+
+
+
+static Rboolean isNAAt(SEXP x, R_xlen_t index) {
+    switch (TYPEOF(x)) {
+        case LGLSXP:
+            return LOGICAL(x)[index] == NA_LOGICAL;
+        case INTSXP:
+            return INTEGER(x)[index] == NA_INTEGER;
+        case REALSXP:
+            return ISNAN(REAL(x)[index]);
+        case CPLXSXP:
+            return ISNAN(COMPLEX(x)[index].r) || ISNAN(COMPLEX(x)[index].i);
+        case STRSXP:
+            return STRING_ELT(x, index) == NA_STRING;
+        default:
+            return FALSE;
+    }
+}
+
+
+
+SEXP _allIndexedNA(SEXP x, SEXP na_index) {
+    R_xlen_t length_x = XLENGTH(x);
+    R_xlen_t length_index = XLENGTH(na_index);
+
+    if (TYPEOF(na_index) == INTSXP) {
+        for (R_xlen_t i = 0; i < length_index; ++i) {
+            int position = INTEGER(na_index)[i];
+
+            if (
+                position == NA_INTEGER || position < 1 ||
+                position > length_x || !isNAAt(x, position - 1)
+            ) {
+                return Rf_ScalarLogical(FALSE);
+            }
+        }
+    }
+    else if (TYPEOF(na_index) == REALSXP) {
+        for (R_xlen_t i = 0; i < length_index; ++i) {
+            double position = REAL(na_index)[i];
+
+            if (
+                !R_FINITE(position) || position < 1 || position > length_x
+            ) {
+                return Rf_ScalarLogical(FALSE);
+            }
+
+            R_xlen_t index = (R_xlen_t) position - 1;
+
+            if (
+                position != (double) (index + 1) || !isNAAt(x, index)
+            ) {
+                return Rf_ScalarLogical(FALSE);
+            }
+        }
+    }
+    else {
+        return Rf_ScalarLogical(FALSE);
+    }
+
+    return Rf_ScalarLogical(TRUE);
 }
 
 

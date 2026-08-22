@@ -1,0 +1,6 @@
+%\VignetteIndexEntry{c. Weighting (declared) values}
+%\VignetteEngine{utils::Sweave}
+\documentclass{article}
+\begin{document}
+This source supplies the standard R metadata for the pre-rendered HTML vignette.
+\end{document}

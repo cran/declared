@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="generator" content="litedown 0.10">
+<title>a. Motivation for the declared package</title>
+<style type="text/css">
+
+body {
+  background-color: #fff;
+  margin: 1em auto;
+  max-width: 700px;
+  overflow: visible;
+  padding-left: 2em;
+  padding-right: 2em;
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+#TOC {
+  clear: both;
+  margin: 0 0 10px 10px;
+  padding: 4px;
+  width: 400px;
+  border: 1px solid #CCCCCC;
+  border-radius: 5px;
+  background-color: #f6f6f6;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+#TOC .toctitle {
+  font-weight: bold;
+  font-size: 15px;
+  margin-left: 5px;
+}
+
+#TOC ul {
+  padding-left: 40px;
+  margin-left: -1.5em;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#TOC ul ul {
+  margin-left: -2em;
+}
+
+#TOC li {
+  line-height: 16px;
+}
+
+table {
+  margin: 1em auto;
+  border-width: 1px;
+  border-color: #DDDDDD;
+  border-style: outset;
+  border-collapse: collapse;
+}
+
+table th {
+  border-width: 2px;
+  padding: 5px;
+  border-style: inset;
+}
+
+table td {
+  border-width: 1px;
+  border-style: inset;
+  line-height: 18px;
+  padding: 5px 5px;
+}
+
+table, table th, table td {
+  border-left-style: none;
+  border-right-style: none;
+}
+
+table thead, table tr.even {
+  background-color: #f7f7f7;
+}
+
+p {
+  margin: 0.5em 0;
+}
+
+blockquote {
+  background-color: #f6f6f6;
+  padding: 0.25em 0.75em;
+}
+
+hr {
+  border-style: solid;
+  border: none;
+  border-top: 1px solid #777;
+  margin: 28px 0;
+}
+
+dl {
+  margin-left: 0;
+}
+
+dl dd {
+  margin-bottom: 13px;
+  margin-left: 13px;
+}
+
+dl dt {
+  font-weight: bold;
+}
+
+ul {
+  margin-top: 0;
+}
+
+ul li {
+  list-style: circle outside;
+}
+
+ul ul {
+  margin-bottom: 0;
+}
+
+pre, code {
+  background-color: #f7f7f7;
+  border-radius: 3px;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+pre {
+  border-radius: 3px;
+  margin: 5px 0px 10px 0px;
+  padding: 10px;
+}
+
+pre:not([class]) {
+  background-color: #f7f7f7;
+}
+
+/* R-only highr palette; keep these colours in sync with declared.theme. */
+code .hl.kwd {
+  color: #af2020;
+  font-weight: bold;
+}
+
+code .hl.kwa {
+  color: #00769e;
+}
+
+code .hl.kwb {
+  color: #5e5e5e;
+}
+
+code .hl.opt {
+  color: #5e5e5e;
+}
+
+code .hl.kwc {
+  color: #609620;
+}
+
+code .hl.num {
+  color: #111111;
+}
+
+code .hl.cn {
+  color: #8f5902;
+}
+
+code .hl.sng {
+  color: #006699;
+}
+
+code .hl.com {
+  color: #006699;
+}
+
+code .hl.def {
+  color: #111111;
+}
+
+code {
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 85%;
+}
+
+p>code, li>code {
+  padding: 2px 0px;
+}
+
+div.figure {
+  text-align: center;
+}
+
+img {
+  background-color: #FFFFFF;
+  padding: 2px;
+  border: 1px solid #DDDDDD;
+  border-radius: 3px;
+  border: 1px solid #CCCCCC;
+  margin: 0 5px;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 35px;
+  line-height: 40px;
+}
+
+h2 {
+  border-bottom: 4px solid #f7f7f7;
+  padding-top: 10px;
+  padding-bottom: 2px;
+  font-size: 145%;
+}
+
+h3 {
+  border-bottom: 2px solid #f7f7f7;
+  padding-top: 10px;
+  font-size: 120%;
+}
+
+h4 {
+  border-bottom: 1px solid #f7f7f7;
+  margin-left: 8px;
+  font-size: 105%;
+}
+
+h5,
+h6 {
+  border-bottom: 1px solid #ccc;
+  font-size: 105%;
+}
+
+a {
+  color: #0033dd;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #6666ff;
+}
+
+a:visited {
+  color: #800080;
+}
+
+a:visited:hover {
+  color: #BB00BB;
+}
+
+a[href^="http:"] {
+  text-decoration: underline;
+}
+
+a[href^="https:"] {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+<div class="frontmatter">
+<div class="title"><h1>a. Motivation for the declared package</h1></div>
+</div>
+<div class="body">
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">library</span><span class="hl def">(declared)</span>
+</code></pre></div>
+<p>The R ecosystem already has some very good packages that deal with labelled
+objects. In particular, the inter-connected packages <strong>haven</strong> and <strong>labelled</strong>
+provide all the functionality most users would ever need.</p>
+<p>As nice and useful as these packages are, it has become apparent they have some
+fundamental design features that run, in some situations, against users’
+expectations. This often relates to the treatment of declared missing values
+that are instrumental for the social sciences.</p>
+<p>The following minimal example (adapted from the vignette in package <strong>haven</strong>)
+illustrates the situation:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">library</span><span class="hl def">(haven)</span>
+<span class="hl def">x1</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">labelled_spss</span><span class="hl def">(</span>
+  <span class="hl kwc">x</span> <span class="hl def">=</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">5</span><span class="hl def">,</span> <span class="hl opt">-</span><span class="hl num">91</span><span class="hl def">),</span>
+  <span class="hl kwc">labels</span> <span class="hl def">=</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl sng">&quot;Missing&quot;</span> <span class="hl def">=</span> <span class="hl opt">-</span><span class="hl num">91</span><span class="hl def">),</span>
+  <span class="hl kwc">na_value</span> <span class="hl def">=</span> <span class="hl opt">-</span><span class="hl num">91</span>
+<span class="hl def">)</span>
+</code></pre></div>
+<p>The printed objects from this package nicely display some properties:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl def">x1</span>
+<span class="hl com">#&gt; &lt;labelled_spss&lt;double&gt;[6]&gt;</span>
+<span class="hl com">#&gt; [1]   1   2   3   4   5 -91</span>
+<span class="hl com">#&gt; Missing values: -91</span>
+<span class="hl com">#&gt; </span>
+<span class="hl com">#&gt; Labels:</span>
+<span class="hl com">#&gt;  value   label</span>
+<span class="hl com">#&gt;    -91 Missing</span>
+</code></pre></div>
+<p>There are 5 normal (non-missing) values (supposedly, they represent the number
+of children), and one declared missing value coded <code>-91</code>. This value <em>acts</em> as a
+missing value, but it is different from a regular missing value in R, coded <code>NA</code>.
+The latter stands for any missing information (something like an empty cell)
+regardless of the reason.</p>
+<p>On the other hand, the cell is <em>not</em> empty, but the value <code>-91</code> is not a valid
+value either. It cannot possibly represent -91 children in the household, but
+for instance, it could have meant the respondent did not want to respond. It is
+properly identified as missing with:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">is.na</span><span class="hl def">(x1)</span>
+<span class="hl com">#&gt; [1] FALSE FALSE FALSE FALSE FALSE  TRUE</span>
+</code></pre></div>
+<p>But when calculating a mean, for instance, the normal expectation is that value
+<code>-91</code> would not play any role in the calculations (since it should be <em>missing</em>).
+However:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">mean</span><span class="hl def">(x1)</span>
+<span class="hl com">#&gt; [1] -12.66667</span>
+</code></pre></div>
+<p>This means the value <code>-91</code> did play an active role despite being identified as
+“missing”. In an ideal world, the expected mean would be 3, or at best, employ
+the argument <code>na.rm = TRUE</code> if the result is <code>NA</code> because of the
+declared missing value.</p>
+<p>A solution to this problem is offered by package <strong>labelled</strong>, which has a
+function called <code>user_na_to_na()</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">library</span><span class="hl def">(labelled)</span>
+<span class="hl kwd">mean</span><span class="hl def">(</span>
+  <span class="hl kwd">user_na_to_na</span><span class="hl def">(x1),</span>
+  <span class="hl kwc">na.rm</span> <span class="hl def">=</span> <span class="hl cn">TRUE</span>
+<span class="hl def">)</span>
+<span class="hl com">#&gt; [1] 3</span>
+</code></pre></div>
+<p>A similar behavior is observed into another package <strong>memisc</strong>, that also deals
+with labels and missing values:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">library</span><span class="hl def">(memisc)</span>
+<span class="hl def">memx</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">5</span><span class="hl def">,</span> <span class="hl opt">-</span><span class="hl num">91</span><span class="hl def">)</span>
+<span class="hl kwd">labels</span><span class="hl def">(memx)</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl sng">&quot;Missing&quot;</span> <span class="hl def">=</span> <span class="hl opt">-</span><span class="hl num">91</span><span class="hl def">)</span>
+<span class="hl kwd">missing.values</span><span class="hl def">(memx)</span> <span class="hl kwb">&lt;-</span> <span class="hl opt">-</span><span class="hl num">91</span>
+
+<span class="hl kwd">mean</span><span class="hl def">(memx)</span>
+<span class="hl com">#&gt; [1] -12.66667</span>
+</code></pre></div>
+<p>Here too, despite being declared as missing, the value <code>-91</code> still plays a role
+in calculating the mean. It has to be coerced to numeric to really convert that
+value to <code>NA</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">mean</span><span class="hl def">(</span>
+  <span class="hl kwd">as.numeric</span><span class="hl def">(memx),</span>
+  <span class="hl kwc">na.rm</span> <span class="hl def">=</span> <span class="hl cn">TRUE</span>
+<span class="hl def">)</span>
+<span class="hl com">#&gt; [1] 3</span>
+</code></pre></div>
+<h2 id="sec:the-declared-solution">The declared solution</h2>
+<p>While solving the problem, the above solutions force two additional operations:</p>
+<ul>
+<li>
+<p>converting the (already) declared user missing values, and</p>
+</li>
+<li>
+<p>employing the <code>na.rm</code> argument.</p>
+</li>
+</ul>
+<p>This should not be necessary, especially if (and it is extremely likely that)
+users may forget the declared missing values are not actually missing values.
+This scenario is quite possible, as many users previously using other software
+like SPSS or Stata where nothing else should be done after declaring the missing
+values may not realize more is needed.</p>
+<p>To solve this problem, the <strong>declared</strong> package creates a similar object, where
+declared missing values are stored (hence interpreted as) regular <code>NA</code>
+missing values in R.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">library</span><span class="hl def">(declared)</span>
+<span class="hl def">x2</span> <span class="hl kwb">&lt;-</span> <span class="hl kwd">declared</span><span class="hl def">(</span>
+  <span class="hl kwc">x</span> <span class="hl def">=</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">5</span><span class="hl def">,</span> <span class="hl opt">-</span><span class="hl num">91</span><span class="hl def">),</span>
+  <span class="hl kwc">labels</span> <span class="hl def">=</span> <span class="hl kwd">c</span><span class="hl def">(</span><span class="hl sng">&quot;Missing&quot;</span> <span class="hl def">=</span> <span class="hl opt">-</span><span class="hl num">91</span><span class="hl def">),</span>
+  <span class="hl kwc">na_value</span> <span class="hl def">=</span> <span class="hl opt">-</span><span class="hl num">91</span>
+<span class="hl def">)</span>
+<span class="hl def">x2</span>
+<span class="hl com">#&gt; &lt;declared&lt;numeric&gt;[6]&gt;</span>
+<span class="hl com">#&gt; [1]       1       2       3       4       5 NA(-91)</span>
+<span class="hl com">#&gt; Missing values: -91</span>
+<span class="hl com">#&gt; </span>
+<span class="hl com">#&gt; Labels:</span>
+<span class="hl com">#&gt;  value   label</span>
+<span class="hl com">#&gt;    -91 Missing</span>
+</code></pre></div>
+<p>The print method makes it obvious the value <code>-91</code> is not a regular number but an
+actual missing value. More importantly, this type of storage circumvents the
+need to convert user-defined missing values to regular <code>NA</code> values since
+they are already stored as regular <code>NA</code> values. The average value is calculated
+simply as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">mean</span><span class="hl def">(x2)</span>
+<span class="hl com">#&gt; [1] 3</span>
+</code></pre></div>
+<p>Notice that neither <code>user_na_to_na()</code>, nor employing <code>na.rm = TRUE</code> are
+necessary, and, despite being stored as an <code>NA</code> value, the value <code>-91</code> is not
+equivalent to an <em>empty cell</em>. The information still exists, but it is simply
+ignored in the calculations.</p>
+<p>At first glance, providing a class method for this function seems unnecessary
+because activating the argument <code>na.rm</code> will return the correct result.
+Explaining the importance of the class method requires a discussion about the
+base R decision to have this argument deactivated by default. This is most
+likely to alert users about possible problems in the data since a default value
+of <code>TRUE</code> would obscure such problems; the mean is calculated irrespective
+of potentially problematic <code>NA</code> values.</p>
+<p>This is where differentiating between empty and declared missing values proves
+valuable. The declared missing values are neither problematic nor signal
+potential problems in the data, given that once a reason is declared, it is
+already known why a particular value is missing.</p>
+<p>The genuinely problematic values are the empty <code>NA</code> values, and the custom
+class method still allows identifying such values if they exist:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">mean</span><span class="hl def">(</span><span class="hl kwd">c</span><span class="hl def">(x2,</span> <span class="hl cn">NA</span><span class="hl def">))</span>
+<span class="hl com">#&gt; [1] NA</span>
+<span class="hl kwd">mean</span><span class="hl def">(</span><span class="hl kwd">c</span><span class="hl def">(x2,</span> <span class="hl cn">NA</span><span class="hl def">),</span> <span class="hl kwc">na.rm</span> <span class="hl def">=</span> <span class="hl cn">TRUE</span><span class="hl def">)</span>
+<span class="hl com">#&gt; [1] 3</span>
+</code></pre></div>
+<p>Since all declared values are stored as regular NA values, the base function
+<code>is.na()</code>, as well as all related functions such as <code>anyNA()</code> etc., are
+unaware and can not differentiate between empty and declared missing values:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">is.na</span><span class="hl def">(</span><span class="hl kwd">c</span><span class="hl def">(x2,</span> <span class="hl cn">NA</span><span class="hl def">))</span>
+<span class="hl com">#&gt; [1] FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE</span>
+</code></pre></div>
+<p>To overcome this situation, package <strong>declared</strong> complementary provides an
+additional function to account for the difference:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">is.empty</span><span class="hl def">(</span><span class="hl kwd">c</span><span class="hl def">(x2,</span> <span class="hl cn">NA</span><span class="hl def">))</span>
+<span class="hl com">#&gt; [1] FALSE FALSE FALSE FALSE FALSE FALSE  TRUE</span>
+</code></pre></div>
+<p>All missing values, empty and declared, play well with the NA oriented, base
+functions such as <code>na.omit()</code> or <code>na.exclude()</code>:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="hl kwd">na.omit</span><span class="hl def">(x2)</span>
+<span class="hl com">#&gt; &lt;declared&lt;numeric&gt;[5]&gt;</span>
+<span class="hl com">#&gt; [1] 1 2 3 4 5</span>
+<span class="hl com">#&gt; Missing values: -91</span>
+<span class="hl com">#&gt; </span>
+<span class="hl com">#&gt; Labels:</span>
+<span class="hl com">#&gt;  value   label</span>
+<span class="hl com">#&gt;    -91 Missing</span>
+</code></pre></div>
+<p>It should be made obvious the excellent packages <strong>memisc</strong>, <strong>haven</strong> and
+<strong>labelled</strong> are not inherently doing a bad thing: the very same result is
+obtained, just via a different route. Package <strong>declared</strong> was created as an
+alternative to the design philosophy of these packages, with a fundamental
+difference: instead of interpreting existing values as missing, the missing
+values are interpreted as existing.</p>
+<p>It does so by storing an additional attribute containing the positions (indexes)
+of the regular <code>NA</code> values in the object, which should be treated as
+missing, and, even more so, to be interpreted as a particular missing response
+category, as specified in the value labels attribute.</p>
+</div>
+</body>
+</html>

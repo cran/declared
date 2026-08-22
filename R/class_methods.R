@@ -1,8 +1,35 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #' @export
 `as.character.declared` <- function (
     x, drop_na = TRUE, values = FALSE, nolabels = FALSE, ...
 ) {
 
+    x <- sanitize_na_index_ (x)
     allabels <- names_values (x, drop_na = drop_na)
     labels <- labels (x)
     attrx <- attributes (x)
@@ -45,18 +72,21 @@
 
 #' @export
 `[.declared` <- function (x, i, ...) {
+  x <- sanitize_na_index_ (x)
   attrx <- attributes (x)
   x <- undeclare (x)
   x <- NextMethod()
   # attrx$label, if not existing, takes from attrx$labels
   # attrx[["label"]] is something like attr (x, "label", exact = TRUE)
   declared (
-    x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]]
+    x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]],
+    decimals = attrx$decimals
   )
 }
 
 #' @export
 `[<-.declared` <- function (x, i, value) {
+  x <- sanitize_na_index_ (x)
   attrx <- attributes (x)
   value <- undeclare (value)
   x <- undeclare (x)
@@ -67,7 +97,8 @@
     x <- as.Date (x)
   }
   declared (
-    x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]]
+    x, attrx[["labels"]], attrx$na_values, attrx$na_range, attrx[["label"]],
+    decimals = attrx$decimals
   )
 }
 
@@ -81,7 +112,7 @@
 
 #' @export
 `c.declared` <- function (...) {
-  dots <- list (...)
+  dots <- lapply (list (...), sanitize_na_index_)
   declared <- unlist (lapply (dots, is.declared))
   na_values <- sort (unique (unlist (
     lapply (dots, function (x) attr (x, "na_values"))
@@ -105,6 +136,16 @@
 
   na_range <- lapply (dots, function (x) attr (x, "na_range", exact = TRUE))
   nulls <- unlist (lapply (na_range, is.null))
+
+  decimals <- unique (unlist (lapply (dots, function (x) {
+    attr (x, "decimals", exact = TRUE)
+  })))
+  if (length (decimals) == 0) {
+    decimals <- NULL
+  }
+  else {
+    decimals <- max (decimals)
+  }
 
   if (all (nulls)) {
     na_range <- NULL
@@ -161,7 +202,8 @@
     labels = labels,
     na_values = na_values,
     na_range = na_range,
-    label = attr (dots[[which (declared)[1]]], "label", exact = TRUE)
+    label = attr (dots[[which (declared)[1]]], "label", exact = TRUE),
+    decimals = decimals
   ))
 }
 
@@ -243,6 +285,7 @@
 
 #' @export
 `na.omit.declared` <- function (object, ...)  {
+  object <- sanitize_na_index_ (object)
   attrx <- attributes (object)
   attrx$na_index <- NULL
   object <- unclass (object)
@@ -259,6 +302,7 @@
 
 #' @export
 `na.fail.declared` <- function (object, ...)  {
+  object <- sanitize_na_index_ (object)
   object <- unclass (object)
   if (isTRUE (attr (object, "date"))) {
     attributes (object) <- NULL
@@ -269,6 +313,7 @@
 
 #' @export
 `na.exclude.declared` <- function (object, ...)  {
+  object <- sanitize_na_index_ (object)
   attrx <- attributes (object)
   attrx$na_index <- NULL
   object <- unclass (object)
@@ -285,6 +330,7 @@
 
 #' @export
 `mean.declared` <- function (x, ...) {
+  x <- sanitize_na_index_ (x)
   xdate <- isTRUE (attr (x, "date"))
   na_index <- attr (x, "na_index")
   if (!is.null (na_index)) {
@@ -306,6 +352,7 @@
 #' @importFrom stats weighted.mean
 #' @export
 weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
+  x <- sanitize_na_index_ (x)
   xdate <- isTRUE (attr (x, "date"))
   na_index <- attr (x, "na_index")
   if (!is.null (na_index)) {
@@ -321,6 +368,7 @@ weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
 
 #' @export
 `median.declared` <- function (x, na.rm = FALSE, ...) {
+  x <- sanitize_na_index_ (x)
   xdate <- isTRUE (attr (x, "date"))
   na_index <- attr (x, "na_index")
   if (!is.null (na_index)) {
@@ -347,6 +395,7 @@ weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
 #' @method all.equal declared
 #' @export
 `all.equal.declared` <- function (target, current, ...) {
+  target <- sanitize_na_index_ (target)
   na_index <- attr (target, "na_index")
   target <- undeclare (target, drop = TRUE)
   if (is.declared (current)) {
@@ -528,6 +577,7 @@ weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
 
 #' @export
 `cumsum.declared` <- function (x) {
+  x <- sanitize_na_index_ (x)
   na_index <- attr (x, "na_index")
   x <- check_date (x)
   if (is.null (na_index)) {
@@ -539,6 +589,7 @@ weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
 
 #' @export
 `cumprod.declared` <- function (x) {
+  x <- sanitize_na_index_ (x)
   na_index <- attr (x, "na_index")
   x <- check_date (x)
   if (is.null (na_index)) {
@@ -550,6 +601,7 @@ weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
 
 #' @export
 `cummax.declared` <- function (x) {
+  x <- sanitize_na_index_ (x)
   na_index <- attr (x, "na_index")
   x <- check_date (x)
   if (is.null (na_index)) {
@@ -561,6 +613,7 @@ weighted.mean.declared <- function (x, w, ..., na.rm = FALSE) {
 
 #' @export
 `cummin.declared` <- function (x) {
+  x <- sanitize_na_index_ (x)
   na_index <- attr (x, "na_index")
   x <- check_date (x)
   if (is.null (na_index)) {
@@ -811,10 +864,122 @@ if (!missing(e2)) {
   .Primitive ("Re")(z)
 }
 
+#' @export
+`format.declared` <- function (x, ..., justify = "none") {
+  if (any (is.na (x)) || !is.null (attr (x, "decimals", exact = TRUE))) {
+    dots <- list (...)
+    digits <- if (!is.null (dots$digits)) dots$digits else getOption ("digits")
+    return (format_declared (x, digits = digits))
+  }
 
+  class (x) <- setdiff (class (x), "declared")
+  return (format (x, ..., justify = justify))
+}
+
+#' @export
+`Summary.declared` <- function (..., na.rm = FALSE) {
+  dots <- lapply (list (...), function (x) {
+    if (inherits (x, "declared")) {
+      x <- sanitize_na_index_ (x)
+      na_index <- attr (x, "na_index")
+      if (!is.null (na_index)) {
+        x <- x[-na_index]
+      }
+      xdate <- isTRUE (attr (x, "date"))
+      attributes (x) <- NULL
+      if (xdate) {
+        x <- as.Date (x)
+      }
+    }
+    return (x)
+  })
+
+  return (do.call (.Generic, c (dots, na.rm = na.rm)))
+}
+
+
+#' @export
+`anyDuplicated.declared` <- function (x, incomparables = FALSE, ...) {
+  x <- unclass (undeclare (x))
+  return (anyDuplicated (x, incomparables = incomparables, ...))
+}
+
+#' @export
+`rep.declared` <- function (x, ...) {
+  x <- sanitize_na_index_ (x)
+  attrx <- attributes (x)
+  rep_val <- rep (undeclare (x, drop = TRUE), ...)
+  return (
+    declared (
+      rep_val,
+      labels = attrx$labels,
+      na_values = attrx$na_values,
+      na_range = attrx$na_range,
+      label = attrx[["label"]],
+      decimals = attrx$decimals
+    )
+  )
+}
+
+#' @export
+`as.Date.declared` <- function (x, ...) {
+  x <- sanitize_na_index_ (x)
+  attrx <- attributes (x)
+  date_vals <- as.Date (undeclare (x, drop = TRUE), ...)
+  return (
+    declared (
+      date_vals,
+      labels = attrx$labels,
+      na_values = attrx$na_values,
+      na_range = attrx$na_range,
+      label = attrx[["label"]],
+      decimals = attrx$decimals
+    )
+  )
+}
+
+#' @export
+`xtfrm.declared` <- function (x) {
+  return (xtfrm_declared (x))
+}
+
+#' @export
+`cosh.declared` <- function (x) {
+  x <- check_date (x)
+  return (.Primitive ("cosh")(x))
+}
+
+#' @export
+`sinh.declared` <- function (x) {
+  x <- check_date (x)
+  return (.Primitive ("sinh")(x))
+}
+
+#' @export
+`tanh.declared` <- function (x) {
+  x <- check_date (x)
+  return (.Primitive ("tanh")(x))
+}
+
+#' @export
+`acosh.declared` <- function (x) {
+  x <- check_date (x)
+  return (.Primitive ("acosh")(x))
+}
+
+#' @export
+`asinh.declared` <- function (x) {
+  x <- check_date (x)
+  return (.Primitive ("asinh")(x))
+}
+
+#' @export
+`atanh.declared` <- function (x) {
+  x <- check_date (x)
+  return (.Primitive ("atanh")(x))
+}
 
 
 # TODO:
-# anyDuplicated () ?
 # cut() ?
 # diff() ?

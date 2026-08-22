@@ -1,3 +1,29 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 # Dynamically exported, see onLoad.R
 # this functions will be registered when or if the package pillar is loaded
 # using eval (parse ()) to avoid the huge dependency tree of vctrs, haven,
@@ -8,9 +34,10 @@
     show_labels = getOption ("declared.show_pillar_labels", TRUE),
     ...) {
 
+    x <- sanitize_na_index_ (x)
     dots <- list (...)
 
-    if (!isFALSE (dots$use_haven)) {
+    if (!isFALSE (dots$use_haven) && is.null (attr (x, "decimals"))) {
       if (eval (parse (text = "requireNamespace('haven', quietly = TRUE)"))) {
           return (eval (parse (
             text = "pillar::pillar_shaft(as.haven (x))"
@@ -69,7 +96,15 @@
 }
 
 `num_disp_components` <- function (x, pillar, width) {
-    display <- format (pillar, width)
+    if (!is.null (attr (x, "decimals"))) {
+        display <- format (
+            format_decimals_ (unclass (undeclare (x)), attr (x, "decimals")),
+            justify = "right"
+        )
+    }
+    else {
+        display <- format (pillar, width)
+    }
     # Sometimes there's an extra leading space from pillar
     display <- trim_ws_lhs (display)
     # exponent notation formatting hinders stripping white space in NAs
@@ -113,6 +148,7 @@
 }
 
 `lbl_pillar_info` <- function (x) {
+    x <- sanitize_na_index_ (x)
     MIN_LBL_DISPLAY <- 6
     labels <- attr (x, "labels")
     if (length (labels) > 0) {

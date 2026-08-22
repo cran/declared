@@ -2,7 +2,6 @@
 % Please edit documentation in R/declared_package.R
 \name{declared_package}
 \alias{declared_package}
-\alias{declared-package}
 \title{Functions for Declared Missing Values}
 \description{
 A set of functions to declare labels and missing values, coupled
@@ -20,8 +19,8 @@ of class "declared".
 \tabular{ll}{
 Package: \tab declared\cr
 Type: \tab Package\cr
-Version: \tab 0.26\cr
-Date: \tab 2026-04-01\cr
+    Version: \tab 0.27\cr
+    Date:    \tab 2026-08-22\cr
 License: \tab GPL-v3\cr
 }
 }
@@ -30,5 +29,3 @@ Adrian Dusa
 
 Maintainer: Adrian Dusa (dusa.adrian@unibuc.ro)
 }
-\keyword{"_PACKAGE"}
-\keyword{internal}

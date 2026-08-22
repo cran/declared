@@ -1,3 +1,29 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #' @title Labelled vectors with declared missing values
 #'
 #' @description
@@ -102,6 +128,8 @@
 #' open ended
 #' @param label A short, human-readable description of the vector
 #' @param measurement Optional, user specified measurement level
+#' @param decimals Optional, maximum number of decimal places used for display
+#' only
 #' @param llevels Logical, when `x` is a factor only use those levels that have
 #' labels
 #' @param ... Other arguments used by various other methods
@@ -113,7 +141,7 @@ NULL
 #' @export
 declared <- function (
     x, labels = NULL, na_values = NULL, na_range = NULL, label = NULL,
-    measurement = NULL, llevels = FALSE, ...
+    measurement = NULL, decimals = NULL, llevels = FALSE, ...
 ) {
   UseMethod ("declared")
 }
@@ -122,7 +150,7 @@ declared <- function (
 #' @export
 declared.default <- function (
     x, labels = NULL, na_values = NULL, na_range = NULL, label = NULL,
-    measurement = NULL, llevels = FALSE, ...
+    measurement = NULL, decimals = NULL, llevels = FALSE, ...
 ) {
 
   xdate <- inherits(x, "Date")
@@ -251,6 +279,7 @@ declared.default <- function (
   attr (x, "date") <- xdate
 
   attr (x, "measurement") <- check_measurement (measurement)
+  attr (x, "decimals") <- check_decimals (decimals)
   class(x) <- unique (c ("declared", class (x)))
   return (x)
 }
@@ -277,12 +306,14 @@ declared.default <- function (
 # @param labels A named vector of value labels.
 # @param label A short, human-readable description of the vector.
 # @param measurement Optional, user specified measurement level.
+# @param decimals Optional, maximum number of decimal places used for display
+# only.
 # @param date Logical, whether `x` should be treated as a date vector.
 # @return A vector of class `"declared"`.
 #' @export
 direct_declared <- function (
     x, na_index = NULL, na_values = NULL, na_range = NULL, labels = NULL,
-    label = NULL, measurement = NULL, date = inherits(x, "Date")
+    label = NULL, measurement = NULL, decimals = NULL, date = inherits(x, "Date")
 ) {
   if (!is.atomic(x)) {
     stopError_("`x` must be an atomic vector.")
@@ -315,6 +346,7 @@ direct_declared <- function (
     labels,
     label,
     check_measurement(measurement),
+    check_decimals(decimals),
     date,
     unique(c("declared", class(x)))
   )

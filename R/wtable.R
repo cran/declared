@@ -1,5 +1,32 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #' Weighted summaries
 #' @name weighted
+#' @order 1
 #'
 #' @title Compute weighted summaries for declared objects
 #'
@@ -46,12 +73,6 @@
 #' be actually observed. When activated, this argument restricts the printed
 #' frequency table to the subset of observed values only.
 #'
-#' The argument `method` can be one of `"unbiased"` or `"ML"`.
-#'
-#' When this is set to `"unbiased"`, the result is an unbiased estimate
-#' using Bessel's correction. When this is set to `"ML"`, the result is the
-#' maximum likelihood estimate for a Gaussian distribution.
-#'
 #' The argument `wt` refers only to frequency weights. Users should be
 #' aware of the differences between frequency weights, analytic weights,
 #' probability weights, design weights, post-stratification weights etc. For
@@ -61,23 +82,9 @@
 #' If no frequency weights are provided, the result is identical to the
 #' corresponding base functions.
 #'
-#' The function `wquantile()` extensively borrowed ideas from packages
-#' **`stats`** and **`Hmisc`**, to ensure a constant interpolation that would
-#' produce the same quantiles if no weights are provided or if all
-#' weights are equal to 1.
-#'
-#' Other arguments can be passed to the stats function `quantile()` via the
-#' three dots `...` argument, and their extensive explanation is found in the
-#' corresponding stats function's help page.
-#'
 #' For all functions, the argument `na.rm` refers to the empty missing values
 #' and its default is set to TRUE. The declared missing values are automatically
 #' eliminated from the summary statistics, even if this argument is deactivated.
-#'
-#' The function `wmode()` returns the weighted mode of a variable. Unlike the
-#' other functions where the prefix `w` signals a weighted version of the
-#' base function with the same name, this has nothing to do with the base
-#' function `mode()` which refers to the storage mode / type of an R object.
 #'
 #' @examples
 #' set.seed(215)
@@ -133,6 +140,8 @@
 #' wtable(DF$Gender)
 #'
 #' wsd(DF$Age)
+#'
+#' wmeasures(DF[c("Age", "Children")], what = c("n", "mean", "sd"))
 #'
 #'
 #' # Weighting: observed proportions
@@ -195,6 +204,7 @@
     xvallab <- yvallab <- NULL
     xna_values <- yna_values <- NULL
     xvalues <- yvalues <- TRUE
+    missing_table <- NULL
     crosstab <- !is.null (y)
 
     if (!crosstab) {
@@ -392,6 +402,17 @@
             tbl <- tbl[tbl > 0]
         }
 
+        missing <- rep (FALSE, length (tbl))
+        if (length (xna_values) > 0) {
+            missing[seq_along (xvallab)] <- is.element (xvallab, xna_values)
+        }
+        missing <- missing | is.na (labels)
+        missing_table <- tbl[missing]
+        if (length (missing_table) > 0) {
+            names (missing_table) <- labels[missing]
+            names (missing_table)[is.na (names (missing_table))] <- "NA"
+        }
+
         toprint <- data.frame (fre = tbl)
 
         toprint$rel <- proportions (toprint$fre)
@@ -428,10 +449,13 @@
         attr (toprint, "na_values") <- xna_values
         attr (toprint, "valid") <- valid
 
+        orig <- tbl[!missing]
+        if (length (xvallab) > 0) {
+            xvallab <- xvallab[!is.element (xvallab, xna_values)]
+        }
+
         if (only_na) {
-            nacount <- sum (is.na (x))
-            orig <- array (nacount, dim = c (1))
-            dimnames (orig) <- list (NA_character_)
+            orig <- array (numeric (0), dim = c (0))
         }
     }
 
@@ -443,14 +467,20 @@
             colnames (orig) <- names (yvallab)
         }
     }
-    else if (length (xvallab)) {
-        names (orig) <- names (xvallab)
+    else {
+        orig <- array (orig, dim = length (orig))
+        if (length (xvallab)) {
+            dimnames (orig) <- list (names (xvallab))
+        }
     }
 
 
 
     attr (orig, "toprint") <- toprint
-    class (orig) <- c ("wtable", class (orig))
+    if (length (missing_table) > 0) {
+        attr (orig, "missing") <- missing_table
+    }
+    class (orig) <- c ("wtable", "table")
     return (orig)
 }
 

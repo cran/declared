@@ -1,5 +1,32 @@
+# Copyright (c) 2022 - 2026, Adrian Dusa
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, in whole or in part, are permitted provided that the
+# following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * The names of its contributors may NOT be used to endorse or promote
+#       products derived from this software without specific prior written
+#       permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL ADRIAN DUSA BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #' @export
 `print.declared` <- function (x, ...) {
+    x <- sanitize_na_index_ (x)
     label <- label (x)
     if (!is.null (label)) {
         label <- paste ("", label)
@@ -116,7 +143,15 @@
         class (x) <- setdiff (class (x), c ("wtable", "array"))
         names (dimnames (x)) <- NULL
         attr (x, "toprint") <- NULL
-        rownames (x) <- gsub (paste (tick, collapse = "|"), "'", rownames (x))
+        attr (x, "missing") <- NULL
+        if (is.null (dim (x))) {
+            names (x) <- gsub (paste (tick, collapse = "|"), "'", names (x))
+        }
+        else {
+            rownames (x) <- gsub (
+                paste (tick, collapse = "|"), "'", rownames (x)
+            )
+        }
         if (length (dimnames (x)) == 2) {
             colnames (x) <- gsub (
                 paste (tick, collapse = "|"), "'", colnames (x)
@@ -498,4 +533,87 @@
     print (noquote (x))
     cat (ifelse (startend, "\n", ""))
 
+}
+
+
+#' @export
+`print.wmeasures` <- function (x, startend = TRUE, digits = 3, ...) {
+
+    result <- x
+    class (x) <- setdiff (class (x), "wmeasures")
+
+    if (is.null (dim (x))) {
+        x <- matrix (x, nrow = 1, dimnames = list ("", names (x)))
+    }
+
+    nms <- colnames (x)
+    x <- matrix (
+        apply (x, 2, format_wmeasure_column_, digits = digits),
+        nrow = nrow (x),
+        dimnames = dimnames (x)
+    )
+
+    widths <- pmax (
+        nchar (encodeString (nms)),
+        apply (x, 2, function (y) max (nchar (y)))
+    )
+
+    for (i in seq_along (nms)) {
+        nms[i] <- padBoth_ (nms[i], widths[i] - nchar (nms[i]))
+        x[, i] <- mapply (
+            padLeft_,
+            x[, i],
+            widths[i] - nchar (x[, i]),
+            USE.NAMES = FALSE
+        )
+    }
+
+    rnms <- rownames (x)
+    width_rnms <- max (nchar (rnms))
+    row_prefix <- width_rnms > 0
+
+    cat (ifelse (startend, "\n", ""))
+    cat (
+        paste0 (
+            paste (rep (" ", width_rnms), collapse = ""),
+            ifelse (row_prefix, " ", ""),
+            paste (nms, collapse = "  "),
+            "\n"
+        )
+    )
+
+    for (i in seq (nrow (x))) {
+        cat (
+            ifelse (
+                row_prefix,
+                paste0 (padRight_ (rnms[i], width_rnms - nchar (rnms[i])), " "),
+                ""
+            ),
+            paste (x[i, ], collapse = "  "),
+            "\n",
+            sep = ""
+        )
+    }
+    cat (ifelse (startend, "\n", ""))
+
+    return (invisible (result))
+}
+
+
+`format_wmeasure_column_` <- function (x, digits = 3) {
+
+    result <- rep ("", length (x))
+    ok <- !is.na (x)
+
+    if (!any (ok)) {
+        return (result)
+    }
+
+    x <- round (as.numeric (x[ok]), digits)
+    ndec <- numdec_ (x, each = TRUE, maxdec = digits)
+    maxdec <- max (ndec, na.rm = TRUE)
+
+    result[ok] <- sprintf (paste0 ("%.", maxdec, "f"), x)
+
+    return (result)
 }
